@@ -1,0 +1,54 @@
+package main
+
+import "github.com/vo-lang/voplay"
+
+type PlayState struct {
+	world   *World
+	elapsed float64
+}
+
+func NewPlayState() *PlayState {
+	return &PlayState{}
+}
+
+func (s *PlayState) Enter(g *voplay.GameCtx) {
+	bindGameActions(g)
+	s.world = NewWorld()
+}
+
+func (s *PlayState) Exit(g *voplay.GameCtx) {
+	if s.world != nil {
+		s.world.Close()
+		s.world = nil
+	}
+}
+
+func (s *PlayState) FixedUpdate(g *voplay.GameCtx, dt float64) {
+	s.elapsed += dt
+	if s.world == nil {
+		return
+	}
+	s.world.FixedUpdate(g, dt)
+}
+
+func (s *PlayState) Update(g *voplay.GameCtx, dt float64) {
+	if s.world == nil {
+		return
+	}
+	s.world.Update(g, dt)
+}
+
+func (s *PlayState) Draw(g *voplay.GameCtx) {
+	g.Draw.ClearColor(voplay.RGB(0.06, 0.08, 0.12))
+	if s.world != nil {
+		s.world.Draw(g)
+	}
+}
+
+func bindGameActions(g *voplay.GameCtx) {
+	g.Actions.Rebind("move_left", voplay.KeyBinding("a"), voplay.KeyBinding("ArrowLeft"))
+	g.Actions.Rebind("move_right", voplay.KeyBinding("d"), voplay.KeyBinding("ArrowRight"))
+	g.Actions.Rebind("move_forward", voplay.KeyBinding("w"), voplay.KeyBinding("ArrowUp"))
+	g.Actions.Rebind("move_back", voplay.KeyBinding("s"), voplay.KeyBinding("ArrowDown"))
+	g.Actions.Rebind("reset", voplay.KeyBinding("r"))
+}

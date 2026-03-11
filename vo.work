@@ -1,0 +1,6 @@
+vo 0.1
+
+use ../voplay
+use ../vogui
+use ../vopack
+use ../vox

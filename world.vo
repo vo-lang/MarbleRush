@@ -1,0 +1,183 @@
+package main
+
+import "fmt"
+import "github.com/vo-lang/voplay"
+import "github.com/vo-lang/voplay/scene3d"
+
+const (
+	playerRadius         = 0.8
+	playerMoveForce      = 42.0
+	cameraLookSensitivity = 0.01
+	cameraZoomSensitivity = 0.8
+	playerResetY         = -25.0
+)
+
+type World struct {
+	scene         *scene3d.Scene
+	camera        *scene3d.ThirdPersonCamera
+	player        *scene3d.Entity
+	startPosition voplay.Vec3
+	cubeModel     voplay.ModelID
+	sphereModel   voplay.ModelID
+}
+
+func NewWorld() *World {
+	w := &World{
+		scene:         scene3d.New(),
+		startPosition: voplay.Vec3{X: 0, Y: 2, Z: 8},
+	}
+	w.configureScene()
+	w.loadModels()
+	w.buildLevel()
+	w.spawnPlayer()
+	w.setupCamera()
+	return w
+}
+
+func (w *World) configureScene() {
+	w.scene.Ambient = voplay.RGB(0.35, 0.37, 0.42)
+	w.scene.Fog = scene3d.FogConfig{
+		Mode:  scene3d.FogLinear,
+		Color: voplay.Hex(0x111827),
+		Start: 35,
+		End:   90,
+	}
+	w.scene.AddLight(scene3d.Light{
+		Type:      scene3d.DirectionalLight,
+		Direction: voplay.Vec3{X: -0.35, Y: -1.0, Z: -0.25}.Normalize(),
+		Color:     voplay.White,
+		Intensity: 1.2,
+	})
+}
+
+func (w *World) loadModels() {
+	w.cubeModel = scene3d.CubeMesh()
+	w.sphereModel = scene3d.SphereMesh(24)
+}
+
+func (w *World) buildLevel() {
+	w.spawnStaticCube(voplay.Vec3{X: 0, Y: -1, Z: 0}, voplay.QuatIdentity(), voplay.Vec3{X: 18, Y: 1, Z: 24}, voplay.Hex(0x1f2937), "floor")
+	w.spawnStaticCube(voplay.Vec3{X: -10, Y: 2, Z: 0}, voplay.QuatIdentity(), voplay.Vec3{X: 1, Y: 4, Z: 24}, voplay.Hex(0x374151), "left_wall")
+	w.spawnStaticCube(voplay.Vec3{X: 10, Y: 2, Z: 0}, voplay.QuatIdentity(), voplay.Vec3{X: 1, Y: 4, Z: 24}, voplay.Hex(0x374151), "right_wall")
+	w.spawnStaticCube(voplay.Vec3{X: 0, Y: 0.25, Z: -8}, voplay.QuatFromAxisAngle(voplay.Vec3{X: 1}, -0.22), voplay.Vec3{X: 6, Y: 0.5, Z: 8}, voplay.Hex(0x4b5563), "ramp")
+	w.spawnStaticCube(voplay.Vec3{X: -3.5, Y: 0.25, Z: 3}, voplay.QuatIdentity(), voplay.Vec3{X: 2.5, Y: 0.5, Z: 2.5}, voplay.Hex(0x475569), "block_a")
+	w.spawnStaticCube(voplay.Vec3{X: 4.0, Y: 0.75, Z: -1}, voplay.QuatIdentity(), voplay.Vec3{X: 3.0, Y: 1.5, Z: 3.0}, voplay.Hex(0x475569), "block_b")
+	w.spawnStaticCube(voplay.Vec3{X: 0, Y: 1.5, Z: -18}, voplay.QuatIdentity(), voplay.Vec3{X: 8, Y: 3, Z: 2}, voplay.Hex(0x0f766e), "goal_gate")
+}
+
+func (w *World) spawnStaticCube(position voplay.Vec3, rotation voplay.Quat, scale voplay.Vec3, tint voplay.Color, tag string) *scene3d.Entity {
+	physics := scene3d.TrimeshPhysics(w.cubeModel)
+	physics.Friction = 0.85
+	return w.scene.Spawn(scene3d.EntityDesc{
+		Position: position,
+		Rotation: rotation,
+		Scale:    scale,
+		Model:    w.cubeModel,
+		Tint:     tint,
+		TintSet:  true,
+		Tag:      tag,
+		Physics:  physics,
+	})
+}
+
+func (w *World) spawnPlayer() {
+	w.player = w.scene.Spawn(scene3d.EntityDesc{
+		Position: w.startPosition,
+		Scale:    voplay.Vec3{X: playerRadius, Y: playerRadius, Z: playerRadius},
+		Model:    w.sphereModel,
+		Tint:     voplay.Hex(0x38bdf8),
+		TintSet:  true,
+		Tag:      "player",
+		Physics: &scene3d.Physics{
+			Type:          scene3d.Dynamic,
+			Collider:      scene3d.Sphere(playerRadius),
+			Layer:         voplay.CollisionLayerDefault,
+			Mask:          voplay.CollisionMaskAll,
+			Density:       1.0,
+			Friction:      0.9,
+			Restitution:   0.1,
+			LinearDamping: 1.8,
+		},
+	})
+}
+
+func (w *World) setupCamera() {
+	w.camera = scene3d.NewThirdPersonCamera(w.player)
+	w.camera.Distance = 7.5
+	w.camera.MinDistance = 3.5
+	w.camera.MaxDistance = 12.0
+	w.camera.PivotOffset = voplay.Vec3{Y: 0.8}
+	w.camera.CollisionEnabled = true
+	w.camera.UpdateCamera(&w.scene.Camera, w.scene, 0)
+}
+
+func (w *World) FixedUpdate(g *voplay.GameCtx, dt float64) {
+	moveX := g.Actions.Axis("move_left", "move_right")
+	moveZ := g.Actions.Axis("move_back", "move_forward")
+	if moveX != 0 || moveZ != 0 {
+		forward := w.scene.Camera.Target.Sub(w.scene.Camera.Position)
+		forward.Y = 0
+		forward = forward.Normalize()
+		right := voplay.Vec3{X: forward.Z, Y: 0, Z: -forward.X}
+		wish := right.Scale(moveX).Add(forward.Scale(moveZ))
+		if wish.LengthSq() > 0 {
+			w.player.ApplyForce(wish.Normalize().Scale(playerMoveForce))
+		}
+	}
+	w.scene.StepAndSyncPhysics(dt)
+	if w.player.Position().Y < playerResetY {
+		w.resetPlayer()
+	}
+}
+
+func (w *World) Update(g *voplay.GameCtx, dt float64) {
+	if g.Actions.IsPressed("reset") {
+		w.resetPlayer()
+	}
+	if g.Input.IsPointerDown(0) {
+		dx, dy := g.Input.PointerDelta()
+		w.camera.HandleInputScaled(dx, dy, cameraLookSensitivity)
+	}
+	_, scrollY := g.Input.ScrollDelta()
+	if scrollY != 0 {
+		w.camera.Zoom(-scrollY * cameraZoomSensitivity)
+	}
+	w.camera.UpdateCamera(&w.scene.Camera, w.scene, dt)
+	w.scene.UpdateEmitters(dt)
+	w.scene.TickAnimations(dt)
+}
+
+func (w *World) Draw(g *voplay.GameCtx) {
+	w.scene.Draw(g.Draw)
+	w.drawHUD(g)
+}
+
+func (w *World) drawHUD(g *voplay.GameCtx) {
+	pos := w.player.Position()
+	vel := w.player.Velocity().Length()
+	g.Draw.DrawRect(16, 16, 620, 100, voplay.Black.WithAlpha(0.35))
+	g.Draw.DrawText("MarbleRush Prototype", 28, 44, 28, voplay.White)
+	g.Draw.DrawText("WASD / Arrows move, hold left mouse to orbit, wheel zoom, R reset", 28, 72, 18, voplay.RGB(0.82, 0.87, 0.95))
+	g.Draw.DrawText(fmt.Sprintf("Player (%.1f, %.1f, %.1f)  Speed %.2f", pos.X, pos.Y, pos.Z, vel), 28, 96, 18, voplay.RGB(0.56, 0.82, 0.98))
+}
+
+func (w *World) resetPlayer() {
+	w.player.SetPosition(w.startPosition)
+	w.player.SetRotation(voplay.QuatIdentity())
+	w.player.SetVelocity(voplay.Vec3{})
+	w.camera.UpdateCamera(&w.scene.Camera, w.scene, 0)
+}
+
+func (w *World) Close() {
+	if w.scene != nil {
+		w.scene.Close()
+	}
+	if w.sphereModel != 0 {
+		w.sphereModel.Free()
+		w.sphereModel = 0
+	}
+	if w.cubeModel != 0 {
+		w.cubeModel.Free()
+		w.cubeModel = 0
+	}
+}
