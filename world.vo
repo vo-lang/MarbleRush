@@ -63,6 +63,8 @@ func (w *World) buildLevel() {
 	w.spawnStaticCube(voplay.Vec3{X: -3.5, Y: 0.25, Z: 3}, voplay.QuatIdentity(), voplay.Vec3{X: 2.5, Y: 0.5, Z: 2.5}, voplay.Hex(0x475569), "block_a")
 	w.spawnStaticCube(voplay.Vec3{X: 4.0, Y: 0.75, Z: -1}, voplay.QuatIdentity(), voplay.Vec3{X: 3.0, Y: 1.5, Z: 3.0}, voplay.Hex(0x475569), "block_b")
 	w.spawnStaticCube(voplay.Vec3{X: 0, Y: 1.5, Z: -18}, voplay.QuatIdentity(), voplay.Vec3{X: 8, Y: 3, Z: 2}, voplay.Hex(0x0f766e), "goal_gate")
+	w.spawnStaticCube(voplay.Vec3{X: 7.5, Y: 2.5, Z: 8}, voplay.QuatIdentity(), voplay.Vec3{X: 0.8, Y: 5.0, Z: 0.8}, voplay.Hex(0xff00ff), "proof_beacon")
+	w.spawnStaticCube(voplay.Vec3{X: 7.5, Y: 5.6, Z: 8}, voplay.QuatIdentity(), voplay.Vec3{X: 2.4, Y: 0.35, Z: 2.4}, voplay.Hex(0xfacc15), "proof_beacon_cap")
 }
 
 func (w *World) spawnStaticCube(position voplay.Vec3, rotation voplay.Quat, scale voplay.Vec3, tint voplay.Color, tag string) *scene3d.Entity {
@@ -155,6 +157,8 @@ func (w *World) Draw(g *voplay.GameCtx) {
 func (w *World) drawHUD(g *voplay.GameCtx) {
 	pos := w.player.Position()
 	vel := w.player.Velocity().Length()
+	g.Draw.DrawRect(300, 18, 680, 60, voplay.Hex(0x7c3aed).WithAlpha(0.88))
+	g.Draw.DrawText("VOPLAY NATIVE DEV OK", 330, 57, 34, voplay.Hex(0xf8fafc))
 	g.Draw.DrawRect(16, 16, 620, 100, voplay.Black.WithAlpha(0.35))
 	g.Draw.DrawText("MarbleRush Prototype", 28, 44, 28, voplay.White)
 	g.Draw.DrawText("WASD / Arrows move, hold left mouse to orbit, wheel zoom, R reset", 28, 72, 18, voplay.RGB(0.82, 0.87, 0.95))
