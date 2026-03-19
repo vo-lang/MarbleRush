@@ -1,6 +1,10 @@
-vo 0.1
+version = 1
 
-use ../voplay
-use ../vogui
-use ../vopack
-use ../vox
+[[use]]
+path = "../voplay"
+
+[[use]]
+path = "../vogui"
+
+[[use]]
+path = "../vopack"
