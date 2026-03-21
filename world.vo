@@ -6,7 +6,13 @@ import "github.com/vo-lang/voplay/scene3d"
 
 const (
 	playerRadius         = 0.8
-	playerMoveForce      = 42.0
+	playerMaxGroundSpeed = 8.5
+	playerGroundAccel    = 30.0
+	playerGroundBrake    = 42.0
+	playerMaxAirSpeed    = 8.5
+	playerAirAccel       = 9.0
+	playerAirBrake       = 2.5
+	playerGroundSnapY    = 0.2
 	cameraLookSensitivity = 0.01
 	cameraZoomSensitivity = 0.8
 	playerResetY         = -25.0
@@ -97,8 +103,8 @@ func (w *World) spawnPlayer() {
 			Mask:          voplay.CollisionMaskAll,
 			Density:       1.0,
 			Friction:      0.9,
-			Restitution:   0.1,
-			LinearDamping: 1.8,
+			Restitution:   0.0,
+			LinearDamping: 0.8,
 		},
 	})
 }
@@ -114,22 +120,83 @@ func (w *World) setupCamera() {
 }
 
 func (w *World) FixedUpdate(g *voplay.GameCtx, dt float64) {
-	moveX := g.Actions.Axis("move_left", "move_right")
-	moveZ := g.Actions.Axis("move_back", "move_forward")
-	if moveX != 0 || moveZ != 0 {
-		forward := w.scene.Camera.Target.Sub(w.scene.Camera.Position)
-		forward.Y = 0
-		forward = forward.Normalize()
-		right := voplay.Vec3{X: forward.Z, Y: 0, Z: -forward.X}
-		wish := right.Scale(moveX).Add(forward.Scale(moveZ))
-		if wish.LengthSq() > 0 {
-			w.player.ApplyForce(wish.Normalize().Scale(playerMoveForce))
-		}
-	}
+	w.applyPlayerDrive(w.playerWishDirection(g), dt)
 	w.scene.StepAndSyncPhysics(dt)
 	if w.player.Position().Y < playerResetY {
 		w.resetPlayer()
 	}
+}
+
+func (w *World) playerWishDirection(g *voplay.GameCtx) voplay.Vec3 {
+	moveX := g.Actions.Axis("move_left", "move_right")
+	moveZ := g.Actions.Axis("move_back", "move_forward")
+	if moveX == 0 && moveZ == 0 {
+		return voplay.Vec3{}
+	}
+	forward := w.scene.Camera.Target.Sub(w.scene.Camera.Position)
+	forward.Y = 0
+	forward = forward.Normalize()
+	right := voplay.Vec3{X: forward.Z, Y: 0, Z: -forward.X}
+	wish := right.Scale(moveX).Add(forward.Scale(moveZ))
+	if wish.LengthSq() == 0 {
+		return voplay.Vec3{}
+	}
+	return wish.Normalize()
+}
+
+func (w *World) applyPlayerDrive(wishDir voplay.Vec3, dt float64) {
+	vel := w.player.Velocity()
+	horizontal := voplay.Vec3{X: vel.X, Z: vel.Z}
+	grounded := w.isPlayerGrounded()
+	maxSpeed := playerMaxGroundSpeed
+	accel := playerGroundAccel
+	brake := playerGroundBrake
+	if !grounded {
+		maxSpeed = playerMaxAirSpeed
+		accel = playerAirAccel
+		brake = playerAirBrake
+	}
+	desired := voplay.Vec3{}
+	maxDelta := brake * dt
+	if wishDir.LengthSq() > 0 {
+		desired = wishDir.Scale(maxSpeed)
+		maxDelta = accel * dt
+	}
+	horizontal = moveTowardsVec3(horizontal, desired, maxDelta)
+	w.player.SetVelocity(voplay.Vec3{X: horizontal.X, Y: vel.Y, Z: horizontal.Z})
+}
+
+func (w *World) isPlayerGrounded() bool {
+	playerPos := w.player.Position()
+	for _, contact := range w.scene.Contacts() {
+		var other *scene3d.Entity
+		if contact.A == w.player {
+			other = contact.B
+		} else if contact.B == w.player {
+			other = contact.A
+		} else {
+			continue
+		}
+		if other == nil || !other.Active {
+			continue
+		}
+		if other.Position().Y <= playerPos.Y-playerGroundSnapY {
+			return true
+		}
+	}
+	return false
+}
+
+func moveTowardsVec3(current, target voplay.Vec3, maxDelta float64) voplay.Vec3 {
+	if maxDelta <= 0 {
+		return current
+	}
+	delta := target.Sub(current)
+	distance := delta.Length()
+	if distance == 0 || distance <= maxDelta {
+		return target
+	}
+	return current.Add(delta.Scale(maxDelta / distance))
 }
 
 func (w *World) Update(g *voplay.GameCtx, dt float64) {
