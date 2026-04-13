@@ -1,0 +1,61 @@
+version = 1
+created_by = "vo mod sync"
+
+[root]
+module = "github.com/vo-lang/marblerush"
+vo = "^0.1.0"
+
+[[resolved]]
+path = "github.com/vo-lang/vogui"
+version = "v0.1.3"
+vo = "^0.1.0"
+commit = "c1a21ddf9d44837890f0e02034c400aedb3b5fbd"
+release_manifest = "sha256:a463537b8a89f1527cabd5fd7cc4a5972aa0da0b1547525ada706fd79b8b35d3"
+source = "sha256:4d0779feeb19100034c19d56b80f5e6b7c7521869e890119a46e5befe3d11d20"
+deps = []
+
+[[resolved.artifact]]
+kind = "extension-native"
+target = "x86_64-unknown-linux-gnu"
+name = "libvo_vogui.so"
+size = 1942920
+digest = "sha256:4d6dff57fb9f4b8be6d81711f038302e97752d15226c164e1ceec0643b64c71e"
+
+[[resolved.artifact]]
+kind = "extension-wasm"
+target = "wasm32-unknown-unknown"
+name = "vogui.wasm"
+size = 26408
+digest = "sha256:a0d47f6756dc04643fa42fe4ed1187d0671e49b1f1ea41b40fe497fdcfa64520"
+
+[[resolved]]
+path = "github.com/vo-lang/vopack"
+version = "v0.1.0"
+vo = "^0.1.0"
+commit = "9b9ed084848c9621aacc5948b384e704ffdc6406"
+release_manifest = "sha256:f8d4c62e0435f92334bd2e480ba28bf6549c6556dbbd1ae7f262c52752210d9b"
+source = "sha256:66332c9bcae3d0c060d86de987a717bc3e5d86bcbf8439e0bea18cba339d0f72"
+deps = []
+
+[[resolved]]
+path = "github.com/vo-lang/voplay"
+version = "v0.1.6"
+vo = "^0.1.0"
+commit = "0c6302a67345cb911cbccf7ec28451ceba631a74"
+release_manifest = "sha256:e403ef07729d598de7c2c593eae3674e88ee5305eb637fcb1aaf0e977e32a969"
+source = "sha256:6bbbb07446b1dba29402bb2fc6b2bd6fccf45543cc8b3637a6277e22c92d285c"
+deps = ["github.com/vo-lang/vogui", "github.com/vo-lang/vopack"]
+
+[[resolved.artifact]]
+kind = "extension-js-glue"
+target = "wasm32-unknown-unknown"
+name = "voplay_island.js"
+size = 95003
+digest = "sha256:05d14bb08c0bb2f48722fb6e3dcede87f34918bd456cb17c6d27b29da9a2c0d8"
+
+[[resolved.artifact]]
+kind = "extension-wasm"
+target = "wasm32-unknown-unknown"
+name = "voplay_island_bg.wasm"
+size = 3142609
+digest = "sha256:9acdc0e0b4cb5e9809ffa0c27f4aa490add823f8f3e8d2eb0d28583216c3afcd"
