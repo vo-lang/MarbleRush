@@ -1,0 +1,105 @@
+package main
+
+import "github.com/vo-lang/voplay"
+import "github.com/vo-lang/voplay/scene3d"
+
+type WorldTheme struct {
+	SkyColor           voplay.Color
+	FogColor           voplay.Color
+	AmbientColor       voplay.Color
+	GroundColor        voplay.Color
+	PathColor          voplay.Color
+	WallColor          voplay.Color
+	RailColor          voplay.Color
+	RampColor          voplay.Color
+	AccentColor        voplay.Color
+	GoalColor          voplay.Color
+	GoalTrimColor      voplay.Color
+	PlayerColor        voplay.Color
+	TreeTrunkColor     voplay.Color
+	TreeLeafColor      voplay.Color
+	CloudColor         voplay.Color
+	HudPanelColor      voplay.Color
+	HudShadowColor     voplay.Color
+	HudTextColor       voplay.Color
+	HudSubtextColor    voplay.Color
+	HudAccentTextColor voplay.Color
+}
+
+func defaultWorldTheme() WorldTheme {
+	return WorldTheme{
+		SkyColor:           voplay.Hex(0x7ed9ff),
+		FogColor:           voplay.Hex(0xcff4ff),
+		AmbientColor:       voplay.Hex(0xbfeaff),
+		GroundColor:        voplay.Hex(0x63c56b),
+		PathColor:          voplay.Hex(0xffefb3),
+		WallColor:          voplay.Hex(0x5f7ea2),
+		RailColor:          voplay.Hex(0xfff7d6),
+		RampColor:          voplay.Hex(0xff8b6a),
+		AccentColor:        voplay.Hex(0xffd84d),
+		GoalColor:          voplay.Hex(0xff5a5f),
+		GoalTrimColor:      voplay.Hex(0xffd84d),
+		PlayerColor:        voplay.Hex(0x3c7dff),
+		TreeTrunkColor:     voplay.Hex(0x8d643b),
+		TreeLeafColor:      voplay.Hex(0x36b86b),
+		CloudColor:         voplay.Hex(0xf8fdff),
+		HudPanelColor:      voplay.Hex(0x10233d),
+		HudShadowColor:     voplay.Hex(0x08121f),
+		HudTextColor:       voplay.Hex(0xffffff),
+		HudSubtextColor:    voplay.Hex(0xd7ecff),
+		HudAccentTextColor: voplay.Hex(0xfff0a8),
+	}
+}
+
+func applyWorldTheme(theme WorldTheme, scene *scene3d.Scene) {
+	scene.Camera.Fov = 56
+	scene.Ambient = theme.AmbientColor
+	scene.Fog = scene3d.FogConfig{
+		Mode:  scene3d.FogLinear,
+		Color: theme.FogColor,
+		Start: 30,
+		End:   90,
+	}
+	scene.AddLight(scene3d.Light{
+		Type:      scene3d.DirectionalLight,
+		Direction: voplay.Vec3{X: -0.38, Y: -1.0, Z: -0.18}.Normalize(),
+		Color:     voplay.White,
+		Intensity: 1.45,
+	})
+	scene.AddLight(scene3d.Light{
+		Type:      scene3d.DirectionalLight,
+		Direction: voplay.Vec3{X: 0.45, Y: -0.35, Z: 0.3}.Normalize(),
+		Color:     theme.FogColor,
+		Intensity: 0.3,
+	})
+}
+
+func drawWorldHUD(theme WorldTheme, g *voplay.GameCtx, showDebugOverlay bool) {
+	drawHudPanel(g.Draw, theme, 24, 22, 380, 88, 0.88)
+	g.Draw.DrawRect(24, 22, 380, 10, theme.AccentColor)
+	g.Draw.DrawText("Marble Rush", 42, 58, 30, theme.HudTextColor)
+	g.Draw.DrawText("Toybox Sprint", 42, 86, 20, theme.HudAccentTextColor)
+	g.Draw.DrawText("Roll through the arch.", 42, 110, 18, theme.HudSubtextColor)
+
+	bottomPanelY := float64(g.Height - 58)
+	bottomTextY := float64(g.Height - 34)
+	drawHudPanel(g.Draw, theme, 24, bottomPanelY, 520, 36, 0.82)
+	g.Draw.DrawText("R reset   Hold left mouse to orbit   Wheel zoom", 40, bottomTextY, 18, theme.HudSubtextColor)
+
+	debugText := "F3 debug HUD: off"
+	if showDebugOverlay {
+		debugText = "F3 debug HUD: on"
+	}
+	debugX := float64(g.Width - 220 - 24)
+	if debugX < 24 {
+		debugX = 24
+	}
+	drawHudPanel(g.Draw, theme, debugX, 22, 220, 36, 0.86)
+	g.Draw.DrawRect(debugX, 22, 220, 8, theme.GoalTrimColor)
+	g.Draw.DrawText(debugText, debugX+16, 46, 18, theme.HudTextColor)
+}
+
+func drawHudPanel(d *voplay.DrawCtx, theme WorldTheme, x, y, width, height float64, alpha float64) {
+	d.DrawRect(x+4, y+5, width, height, theme.HudShadowColor.WithAlpha(0.18))
+	d.DrawRect(x, y, width, height, theme.HudPanelColor.WithAlpha(alpha))
+}

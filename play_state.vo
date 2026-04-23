@@ -3,8 +3,9 @@ package main
 import "github.com/vo-lang/voplay"
 
 type PlayState struct {
-	world   *World
-	elapsed float64
+	world               *World
+	elapsed             float64
+	debugOverlayVisible bool
 }
 
 func NewPlayState() *PlayState {
@@ -13,11 +14,12 @@ func NewPlayState() *PlayState {
 
 func (s *PlayState) Enter(g *voplay.GameCtx) {
 	bindGameActions(g)
-	g.ShowDebugOverlay()
+	s.applyDebugOverlay(g)
 	s.world = NewWorld()
 }
 
 func (s *PlayState) Exit(g *voplay.GameCtx) {
+	g.HideDebugOverlay()
 	if s.world != nil {
 		s.world.Close()
 		s.world = nil
@@ -33,6 +35,10 @@ func (s *PlayState) FixedUpdate(g *voplay.GameCtx, dt float64) {
 }
 
 func (s *PlayState) Update(g *voplay.GameCtx, dt float64) {
+	if g.Actions.IsPressed("toggle_debug_overlay") {
+		s.debugOverlayVisible = !s.debugOverlayVisible
+		s.applyDebugOverlay(g)
+	}
 	if s.world == nil {
 		return
 	}
@@ -40,10 +46,22 @@ func (s *PlayState) Update(g *voplay.GameCtx, dt float64) {
 }
 
 func (s *PlayState) Draw(g *voplay.GameCtx) {
-	g.Draw.ClearColor(voplay.RGB(0.06, 0.08, 0.12))
+	clearColor := defaultWorldTheme().SkyColor
 	if s.world != nil {
-		s.world.Draw(g)
+		clearColor = s.world.theme.SkyColor
 	}
+	g.Draw.ClearColor(clearColor)
+	if s.world != nil {
+		s.world.Draw(g, s.debugOverlayVisible)
+	}
+}
+
+func (s *PlayState) applyDebugOverlay(g *voplay.GameCtx) {
+	if s.debugOverlayVisible {
+		g.ShowDebugOverlay()
+		return
+	}
+	g.HideDebugOverlay()
 }
 
 func bindGameActions(g *voplay.GameCtx) {
@@ -52,4 +70,5 @@ func bindGameActions(g *voplay.GameCtx) {
 	g.Actions.Rebind("move_forward", voplay.KeyBinding("w"), voplay.KeyBinding("ArrowUp"))
 	g.Actions.Rebind("move_back", voplay.KeyBinding("s"), voplay.KeyBinding("ArrowDown"))
 	g.Actions.Rebind("reset", voplay.KeyBinding("r"))
+	g.Actions.Rebind("toggle_debug_overlay", voplay.KeyBinding("F3"))
 }

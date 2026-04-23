@@ -1,21 +1,20 @@
 package main
 
-import "fmt"
 import "github.com/vo-lang/voplay"
 import "github.com/vo-lang/voplay/scene3d"
 
 const (
-	playerRadius         = 0.8
-	playerMaxGroundSpeed = 8.5
-	playerGroundAccel    = 30.0
-	playerGroundBrake    = 42.0
-	playerMaxAirSpeed    = 8.5
-	playerAirAccel       = 9.0
-	playerAirBrake       = 2.5
-	playerGroundSnapY    = 0.2
+	playerRadius          = 0.8
+	playerMaxGroundSpeed  = 8.5
+	playerGroundAccel     = 30.0
+	playerGroundBrake     = 42.0
+	playerMaxAirSpeed     = 8.5
+	playerAirAccel        = 9.0
+	playerAirBrake        = 2.5
+	playerGroundSnapY     = 0.2
 	cameraLookSensitivity = 0.01
 	cameraZoomSensitivity = 0.8
-	playerResetY         = -25.0
+	playerResetY          = -25.0
 )
 
 type World struct {
@@ -23,14 +22,17 @@ type World struct {
 	camera        *scene3d.ThirdPersonCamera
 	player        *scene3d.Entity
 	startPosition voplay.Vec3
+	theme         WorldTheme
 	cubeModel     voplay.ModelID
+	cylinderModel voplay.ModelID
 	sphereModel   voplay.ModelID
 }
 
 func NewWorld() *World {
 	w := &World{
 		scene:         scene3d.New(),
-		startPosition: voplay.Vec3{X: 0, Y: 2, Z: 8},
+		startPosition: voplay.Vec3{X: 0, Y: 2, Z: 11},
+		theme:         defaultWorldTheme(),
 	}
 	w.configureScene()
 	w.loadModels()
@@ -41,51 +43,13 @@ func NewWorld() *World {
 }
 
 func (w *World) configureScene() {
-	w.scene.Ambient = voplay.RGB(0.35, 0.37, 0.42)
-	w.scene.Fog = scene3d.FogConfig{
-		Mode:  scene3d.FogLinear,
-		Color: voplay.Hex(0x111827),
-		Start: 35,
-		End:   90,
-	}
-	w.scene.AddLight(scene3d.Light{
-		Type:      scene3d.DirectionalLight,
-		Direction: voplay.Vec3{X: -0.35, Y: -1.0, Z: -0.25}.Normalize(),
-		Color:     voplay.White,
-		Intensity: 1.2,
-	})
+	applyWorldTheme(w.theme, w.scene)
 }
 
 func (w *World) loadModels() {
 	w.cubeModel = scene3d.CubeMesh()
+	w.cylinderModel = scene3d.CylinderMesh(24)
 	w.sphereModel = scene3d.SphereMesh(24)
-}
-
-func (w *World) buildLevel() {
-	w.spawnStaticCube(voplay.Vec3{X: 0, Y: -1, Z: 0}, voplay.QuatIdentity(), voplay.Vec3{X: 18, Y: 1, Z: 24}, voplay.Hex(0x1f2937), "floor")
-	w.spawnStaticCube(voplay.Vec3{X: -10, Y: 2, Z: 0}, voplay.QuatIdentity(), voplay.Vec3{X: 1, Y: 4, Z: 24}, voplay.Hex(0x374151), "left_wall")
-	w.spawnStaticCube(voplay.Vec3{X: 10, Y: 2, Z: 0}, voplay.QuatIdentity(), voplay.Vec3{X: 1, Y: 4, Z: 24}, voplay.Hex(0x374151), "right_wall")
-	w.spawnStaticCube(voplay.Vec3{X: 0, Y: 0.25, Z: -8}, voplay.QuatFromAxisAngle(voplay.Vec3{X: 1}, -0.22), voplay.Vec3{X: 6, Y: 0.5, Z: 8}, voplay.Hex(0x4b5563), "ramp")
-	w.spawnStaticCube(voplay.Vec3{X: -3.5, Y: 0.25, Z: 3}, voplay.QuatIdentity(), voplay.Vec3{X: 2.5, Y: 0.5, Z: 2.5}, voplay.Hex(0x475569), "block_a")
-	w.spawnStaticCube(voplay.Vec3{X: 4.0, Y: 0.75, Z: -1}, voplay.QuatIdentity(), voplay.Vec3{X: 3.0, Y: 1.5, Z: 3.0}, voplay.Hex(0x475569), "block_b")
-	w.spawnStaticCube(voplay.Vec3{X: 0, Y: 1.5, Z: -18}, voplay.QuatIdentity(), voplay.Vec3{X: 8, Y: 3, Z: 2}, voplay.Hex(0x0f766e), "goal_gate")
-	w.spawnStaticCube(voplay.Vec3{X: 7.5, Y: 2.5, Z: 8}, voplay.QuatIdentity(), voplay.Vec3{X: 0.8, Y: 5.0, Z: 0.8}, voplay.Hex(0xff00ff), "proof_beacon")
-	w.spawnStaticCube(voplay.Vec3{X: 7.5, Y: 5.6, Z: 8}, voplay.QuatIdentity(), voplay.Vec3{X: 2.4, Y: 0.35, Z: 2.4}, voplay.Hex(0xfacc15), "proof_beacon_cap")
-}
-
-func (w *World) spawnStaticCube(position voplay.Vec3, rotation voplay.Quat, scale voplay.Vec3, tint voplay.Color, tag string) *scene3d.Entity {
-	physics := scene3d.TrimeshPhysics(w.cubeModel)
-	physics.Friction = 0.85
-	return w.scene.Spawn(scene3d.EntityDesc{
-		Position: position,
-		Rotation: rotation,
-		Scale:    scale,
-		Model:    w.cubeModel,
-		Tint:     tint,
-		TintSet:  true,
-		Tag:      tag,
-		Physics:  physics,
-	})
 }
 
 func (w *World) spawnPlayer() {
@@ -93,7 +57,7 @@ func (w *World) spawnPlayer() {
 		Position: w.startPosition,
 		Scale:    voplay.Vec3{X: playerRadius, Y: playerRadius, Z: playerRadius},
 		Model:    w.sphereModel,
-		Tint:     voplay.Hex(0x38bdf8),
+		Tint:     w.theme.PlayerColor,
 		TintSet:  true,
 		Tag:      "player",
 		Physics: &scene3d.Physics{
@@ -216,36 +180,9 @@ func (w *World) Update(g *voplay.GameCtx, dt float64) {
 	w.scene.TickAnimations(dt)
 }
 
-func (w *World) Draw(g *voplay.GameCtx) {
+func (w *World) Draw(g *voplay.GameCtx, debugOverlayVisible bool) {
 	w.scene.Draw(g.Draw)
-	w.drawHUD(g)
-}
-
-func (w *World) drawHUD(g *voplay.GameCtx) {
-	pos := w.player.Position()
-	vel := w.player.Velocity().Length()
-	moveLeft := g.Actions.IsDown("move_left")
-	moveRight := g.Actions.IsDown("move_right")
-	moveForward := g.Actions.IsDown("move_forward")
-	moveBack := g.Actions.IsDown("move_back")
-	moveX := g.Actions.Axis("move_left", "move_right")
-	moveZ := g.Actions.Axis("move_back", "move_forward")
-	wKey := g.Input.IsKeyDown("w")
-	aKey := g.Input.IsKeyDown("a")
-	sKey := g.Input.IsKeyDown("s")
-	dKey := g.Input.IsKeyDown("d")
-	upKey := g.Input.IsKeyDown("ArrowUp")
-	leftKey := g.Input.IsKeyDown("ArrowLeft")
-	downKey := g.Input.IsKeyDown("ArrowDown")
-	rightKey := g.Input.IsKeyDown("ArrowRight")
-	g.Draw.DrawRect(300, 18, 680, 60, voplay.Hex(0x7c3aed).WithAlpha(0.88))
-	g.Draw.DrawText("VOPLAY NATIVE DEV OK", 330, 57, 34, voplay.Hex(0xf8fafc))
-	g.Draw.DrawRect(16, 16, 980, 150, voplay.Black.WithAlpha(0.35))
-	g.Draw.DrawText("MarbleRush Prototype", 28, 44, 28, voplay.White)
-	g.Draw.DrawText("WASD / Arrows move, hold left mouse to orbit, wheel zoom, R reset", 28, 72, 18, voplay.RGB(0.82, 0.87, 0.95))
-	g.Draw.DrawText(fmt.Sprintf("Player (%.1f, %.1f, %.1f)  Speed %.2f", pos.X, pos.Y, pos.Z, vel), 28, 96, 18, voplay.RGB(0.56, 0.82, 0.98))
-	g.Draw.DrawText(fmt.Sprintf("Raw keys W:%t A:%t S:%t D:%t  Up:%t Left:%t Down:%t Right:%t", wKey, aKey, sKey, dKey, upKey, leftKey, downKey, rightKey), 28, 120, 18, voplay.RGB(0.98, 0.86, 0.56))
-	g.Draw.DrawText(fmt.Sprintf("Actions left:%t right:%t forward:%t back:%t  Axis(%.1f, %.1f)", moveLeft, moveRight, moveForward, moveBack, moveX, moveZ), 28, 144, 18, voplay.RGB(0.64, 0.98, 0.72))
+	drawWorldHUD(w.theme, g, debugOverlayVisible)
 }
 
 func (w *World) resetPlayer() {
@@ -262,6 +199,10 @@ func (w *World) Close() {
 	if w.sphereModel != 0 {
 		w.sphereModel.Free()
 		w.sphereModel = 0
+	}
+	if w.cylinderModel != 0 {
+		w.cylinderModel.Free()
+		w.cylinderModel = 0
 	}
 	if w.cubeModel != 0 {
 		w.cubeModel.Free()
