@@ -13,6 +13,7 @@ func NewPlayState() *PlayState {
 }
 
 func (s *PlayState) Enter(g *voplay.GameCtx) {
+	s.elapsed = 0
 	bindGameActions(g)
 	s.applyDebugOverlay(g)
 	s.world = NewWorld()

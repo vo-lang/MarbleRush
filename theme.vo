@@ -9,18 +9,27 @@ type WorldTheme struct {
 	AmbientColor       voplay.Color
 	GroundColor        voplay.Color
 	PathColor          voplay.Color
+	BridgeColor        voplay.Color
 	WallColor          voplay.Color
 	RailColor          voplay.Color
 	RampColor          voplay.Color
 	AccentColor        voplay.Color
+	BarrierColor       voplay.Color
+	CheckpointColor    voplay.Color
+	BannerColor        voplay.Color
+	SupportColor       voplay.Color
 	GoalColor          voplay.Color
 	GoalTrimColor      voplay.Color
 	PlayerColor        voplay.Color
 	TreeTrunkColor     voplay.Color
 	TreeLeafColor      voplay.Color
+	BushColor          voplay.Color
 	CloudColor         voplay.Color
+	CloudShadowColor   voplay.Color
+	OrbColor           voplay.Color
 	HudPanelColor      voplay.Color
 	HudShadowColor     voplay.Color
+	HudTrimColor       voplay.Color
 	HudTextColor       voplay.Color
 	HudSubtextColor    voplay.Color
 	HudAccentTextColor voplay.Color
@@ -28,75 +37,93 @@ type WorldTheme struct {
 
 func defaultWorldTheme() WorldTheme {
 	return WorldTheme{
-		SkyColor:           voplay.Hex(0x7ed9ff),
-		FogColor:           voplay.Hex(0xcff4ff),
-		AmbientColor:       voplay.Hex(0xbfeaff),
-		GroundColor:        voplay.Hex(0x63c56b),
-		PathColor:          voplay.Hex(0xffefb3),
-		WallColor:          voplay.Hex(0x5f7ea2),
-		RailColor:          voplay.Hex(0xfff7d6),
-		RampColor:          voplay.Hex(0xff8b6a),
-		AccentColor:        voplay.Hex(0xffd84d),
-		GoalColor:          voplay.Hex(0xff5a5f),
-		GoalTrimColor:      voplay.Hex(0xffd84d),
+		SkyColor:           voplay.Hex(0x8cdeff),
+		FogColor:           voplay.Hex(0xe0f8ff),
+		AmbientColor:       voplay.Hex(0xd0ecff),
+		GroundColor:        voplay.Hex(0x67c96d),
+		PathColor:          voplay.Hex(0xffefb2),
+		BridgeColor:        voplay.Hex(0xf6bf73),
+		WallColor:          voplay.Hex(0x60789d),
+		RailColor:          voplay.Hex(0xfff8df),
+		RampColor:          voplay.Hex(0xff916c),
+		AccentColor:        voplay.Hex(0xffd44b),
+		BarrierColor:       voplay.Hex(0x33486f),
+		CheckpointColor:    voplay.Hex(0x39d8c5),
+		BannerColor:        voplay.Hex(0xf55367),
+		SupportColor:       voplay.Hex(0x7c95b6),
+		GoalColor:          voplay.Hex(0xff5b67),
+		GoalTrimColor:      voplay.Hex(0xffdf59),
 		PlayerColor:        voplay.Hex(0x3c7dff),
 		TreeTrunkColor:     voplay.Hex(0x8d643b),
-		TreeLeafColor:      voplay.Hex(0x36b86b),
-		CloudColor:         voplay.Hex(0xf8fdff),
+		TreeLeafColor:      voplay.Hex(0x35b96b),
+		BushColor:          voplay.Hex(0x2fc35c),
+		CloudColor:         voplay.Hex(0xffffff),
+		CloudShadowColor:   voplay.Hex(0xd7eef8),
+		OrbColor:           voplay.Hex(0xffea83),
 		HudPanelColor:      voplay.Hex(0x10233d),
-		HudShadowColor:     voplay.Hex(0x08121f),
+		HudShadowColor:     voplay.Hex(0x08111e),
+		HudTrimColor:       voplay.Hex(0x3b7eff),
 		HudTextColor:       voplay.Hex(0xffffff),
-		HudSubtextColor:    voplay.Hex(0xd7ecff),
-		HudAccentTextColor: voplay.Hex(0xfff0a8),
+		HudSubtextColor:    voplay.Hex(0xd9efff),
+		HudAccentTextColor: voplay.Hex(0xfff2b0),
 	}
 }
 
 func applyWorldTheme(theme WorldTheme, scene *scene3d.Scene) {
-	scene.Camera.Fov = 56
+	scene.Camera.Fov = 54
 	scene.Ambient = theme.AmbientColor
 	scene.Fog = scene3d.FogConfig{
 		Mode:  scene3d.FogLinear,
 		Color: theme.FogColor,
-		Start: 30,
-		End:   90,
+		Start: 28,
+		End:   96,
 	}
 	scene.AddLight(scene3d.Light{
 		Type:      scene3d.DirectionalLight,
-		Direction: voplay.Vec3{X: -0.38, Y: -1.0, Z: -0.18}.Normalize(),
+		Direction: voplay.Vec3{X: -0.36, Y: -1.0, Z: -0.14}.Normalize(),
 		Color:     voplay.White,
-		Intensity: 1.45,
+		Intensity: 1.5,
 	})
 	scene.AddLight(scene3d.Light{
 		Type:      scene3d.DirectionalLight,
-		Direction: voplay.Vec3{X: 0.45, Y: -0.35, Z: 0.3}.Normalize(),
+		Direction: voplay.Vec3{X: 0.48, Y: -0.32, Z: 0.3}.Normalize(),
 		Color:     theme.FogColor,
-		Intensity: 0.3,
+		Intensity: 0.38,
 	})
 }
 
 func drawWorldHUD(theme WorldTheme, g *voplay.GameCtx, showDebugOverlay bool) {
-	drawHudPanel(g.Draw, theme, 24, 22, 380, 88, 0.88)
-	g.Draw.DrawRect(24, 22, 380, 10, theme.AccentColor)
+	drawHudPanel(g.Draw, theme, 24, 22, 410, 94, 0.88)
+	g.Draw.DrawRect(24, 22, 410, 10, theme.HudTrimColor)
 	g.Draw.DrawText("Marble Rush", 42, 58, 30, theme.HudTextColor)
-	g.Draw.DrawText("Toybox Sprint", 42, 86, 20, theme.HudAccentTextColor)
-	g.Draw.DrawText("Roll through the arch.", 42, 110, 18, theme.HudSubtextColor)
+	g.Draw.DrawText("Toybox Ascent", 42, 86, 20, theme.HudAccentTextColor)
+	g.Draw.DrawText("Roll through the celebration arch.", 42, 110, 18, theme.HudSubtextColor)
+
+	courseX := float64(g.Width - 250 - 24)
+	if courseX < 24 {
+		courseX = 24
+	}
+	drawHudPanel(g.Draw, theme, courseX, 22, 250, 66, 0.86)
+	g.Draw.DrawRect(courseX, 22, 250, 8, theme.GoalTrimColor)
+	g.Draw.DrawText("Course 1", courseX+18, 52, 18, theme.HudAccentTextColor)
+	g.Draw.DrawText("Skyway Sprint", courseX+18, 78, 24, theme.HudTextColor)
 
 	bottomPanelY := float64(g.Height - 58)
 	bottomTextY := float64(g.Height - 34)
-	drawHudPanel(g.Draw, theme, 24, bottomPanelY, 520, 36, 0.82)
+	drawHudPanel(g.Draw, theme, 24, bottomPanelY, 560, 36, 0.82)
 	g.Draw.DrawText("R reset   Hold left mouse to orbit   Wheel zoom", 40, bottomTextY, 18, theme.HudSubtextColor)
 
 	debugText := "F3 debug HUD: off"
 	if showDebugOverlay {
 		debugText = "F3 debug HUD: on"
 	}
-	debugX := float64(g.Width - 220 - 24)
+	debugX := float64(g.Width - 230 - 24)
 	if debugX < 24 {
 		debugX = 24
 	}
-	drawHudPanel(g.Draw, theme, debugX, 22, 220, 36, 0.86)
-	g.Draw.DrawRect(debugX, 22, 220, 8, theme.GoalTrimColor)
-	g.Draw.DrawText(debugText, debugX+16, 46, 18, theme.HudTextColor)
+	drawHudPanel(g.Draw, theme, debugX, float64(g.Height-58), 230, 36, 0.84)
+	g.Draw.DrawRect(debugX, float64(g.Height-58), 230, 6, theme.AccentColor)
+	g.Draw.DrawText(debugText, debugX+16, float64(g.Height-34), 18, theme.HudTextColor)
 }
 
 func drawHudPanel(d *voplay.DrawCtx, theme WorldTheme, x, y, width, height float64, alpha float64) {

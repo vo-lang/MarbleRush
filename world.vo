@@ -31,7 +31,7 @@ type World struct {
 func NewWorld() *World {
 	w := &World{
 		scene:         scene3d.New(),
-		startPosition: voplay.Vec3{X: 0, Y: 2, Z: 11},
+		startPosition: voplay.Vec3{X: 0, Y: 1.8, Z: 14.2},
 		theme:         defaultWorldTheme(),
 	}
 	w.configureScene()
@@ -75,10 +75,10 @@ func (w *World) spawnPlayer() {
 
 func (w *World) setupCamera() {
 	w.camera = scene3d.NewThirdPersonCamera(w.player)
-	w.camera.Distance = 7.5
-	w.camera.MinDistance = 3.5
-	w.camera.MaxDistance = 12.0
-	w.camera.PivotOffset = voplay.Vec3{Y: 0.8}
+	w.camera.Distance = 8.2
+	w.camera.MinDistance = 4.0
+	w.camera.MaxDistance = 13.5
+	w.camera.PivotOffset = voplay.Vec3{Y: 0.9}
 	w.camera.CollisionEnabled = true
 	w.camera.UpdateCamera(&w.scene.Camera, w.scene, 0)
 }
