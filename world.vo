@@ -48,8 +48,8 @@ func (w *World) configureScene() {
 
 func (w *World) loadModels() {
 	w.cubeModel = scene3d.CubeMesh()
-	w.cylinderModel = scene3d.CylinderMesh(24)
-	w.sphereModel = scene3d.SphereMesh(24)
+	w.cylinderModel = scene3d.CylinderMesh(16)
+	w.sphereModel = scene3d.SphereMesh(18)
 }
 
 func (w *World) spawnPlayer() {
