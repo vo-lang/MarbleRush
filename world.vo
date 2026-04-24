@@ -1,44 +1,68 @@
 package main
 
-import "github.com/vo-lang/voplay"
-import "github.com/vo-lang/voplay/scene3d"
+import (
+	"os"
+	"path/filepath"
+
+	"github.com/vo-lang/voplay"
+	"github.com/vo-lang/voplay/scene3d"
+)
 
 const (
-	playerRadius          = 0.8
-	playerMaxGroundSpeed  = 8.5
-	playerGroundAccel     = 30.0
-	playerGroundBrake     = 42.0
-	playerMaxAirSpeed     = 8.5
-	playerAirAccel        = 9.0
-	playerAirBrake        = 2.5
-	playerGroundSnapY     = 0.2
+	playerRadius = 0.8
+	playerMaxGroundSpeed = 8.5
+	playerGroundAccel = 30.0
+	playerGroundBrake = 42.0
+	playerMaxAirSpeed = 8.5
+	playerAirAccel = 9.0
+	playerAirBrake = 2.5
+	playerGroundSnapY = 0.2
 	cameraLookSensitivity = 0.01
 	cameraZoomSensitivity = 0.8
-	playerResetY          = -25.0
+	playerResetY = -25.0
+)
+
+const (
+	worldAssetGroup = "marblerush-world"
 )
 
 type World struct {
-	scene         *scene3d.Scene
-	camera        *scene3d.ThirdPersonCamera
-	player        *scene3d.Entity
+	scene *scene3d.Scene
+	camera *scene3d.ThirdPersonCamera
+	player *scene3d.Entity
 	startPosition voplay.Vec3
-	theme         WorldTheme
-	cubeModel     voplay.ModelID
+	theme WorldTheme
+	assets *voplay.Assets
+	assetGroup string
+	assetPackPath string
+	checkpointPosition voplay.Vec3
+	checkpointLabel string
+	courseTime float64
+	finishTime float64
+	finished bool
+	collected int
+	message string
+	messageTimer float64
+	collectibles []*Collectible
+	checkpoints []*Checkpoint
+	obstacles []*MovingObstacle
+	goal GoalZone
+	cubeModel voplay.ModelID
 	cylinderModel voplay.ModelID
-	sphereModel   voplay.ModelID
+	sphereModel voplay.ModelID
 }
 
-func NewWorld() *World {
-	w := &World{
-		scene:         scene3d.New(),
-		startPosition: voplay.Vec3{X: 0, Y: 1.8, Z: 14.2},
-		theme:         defaultWorldTheme(),
-	}
+func NewWorld(g *voplay.GameCtx) *World {
+	w := &World{scene: scene3d.New(), startPosition: voplay.Vec3{X: 0, Y: 1.8, Z: 14.2}, theme: defaultWorldTheme()}
+	w.checkpointPosition = w.startPosition
+	w.checkpointLabel = "Start"
 	w.configureScene()
+	w.loadAssets(g.Assets)
 	w.loadModels()
 	w.buildLevel()
 	w.spawnPlayer()
 	w.setupCamera()
+	w.restartRun()
 	return w
 }
 
@@ -52,42 +76,121 @@ func (w *World) loadModels() {
 	w.sphereModel = scene3d.SphereMesh(18)
 }
 
+func (w *World) loadAssets(assets *voplay.Assets) {
+	if assets == nil {
+		return
+	}
+	w.assets = assets
+	w.assetPackPath = mountSkyboxPack(assets)
+	assets.BeginGroup(worldAssetGroup)
+	skybox, err := loadSkybox(assets, w.assetPackPath != "")
+	if err == nil {
+		w.scene.Skybox = skybox
+	}
+	assets.EndGroup()
+	if err != nil {
+		assets.ReleaseGroup(worldAssetGroup)
+		return
+	}
+	w.assetGroup = worldAssetGroup
+}
+
+func mountSkyboxPack(assets *voplay.Assets) string {
+	for _, root := range assetRootCandidates() {
+		path := filepath.Join([]string{root, "marblerush.vpak"})
+		err := assets.Mount(path, 0)
+		if err == nil {
+			return path
+		}
+	}
+	return ""
+}
+
+func loadSkybox(assets *voplay.Assets, hasPack bool) (voplay.CubemapID, error) {
+	if hasPack {
+		skybox, err := loadSkyboxFromPack(assets)
+		if err == nil {
+			return skybox, nil
+		}
+	}
+	return loadSkyboxFromFileCandidates(assets)
+}
+
+func loadSkyboxFromPack(assets *voplay.Assets) (voplay.CubemapID, error) {
+	return assets.Cubemap("skybox/right.png", "skybox/left.png", "skybox/top.png", "skybox/bottom.png", "skybox/front.png", "skybox/back.png")
+}
+
+func loadSkyboxFromFileCandidates(assets *voplay.Assets) (voplay.CubemapID, error) {
+	var lastErr error
+	for _, root := range assetRootCandidates() {
+		prefix := filepath.Join([]string{root, "skybox"}) + "/"
+		skybox, err := loadSkyboxFromFiles(assets, prefix)
+		if err == nil {
+			return skybox, nil
+		}
+		lastErr = err
+	}
+	return 0, lastErr
+}
+
+func loadSkyboxFromFiles(assets *voplay.Assets, prefix string) (voplay.CubemapID, error) {
+	return assets.Cubemap(prefix+"right.png", prefix+"left.png", prefix+"top.png", prefix+"bottom.png", prefix+"front.png", prefix+"back.png")
+}
+
+func assetRootCandidates() []string {
+	roots := []string{}
+	if len(os.Args) > 0 {
+		entryDir := filepath.Dir(os.Args[0])
+		if entryDir != "" && entryDir != "." && entryDir != "/" {
+			roots = appendAssetRoot(roots, filepath.Join([]string{entryDir, "assets"}))
+		}
+	}
+	roots = appendAssetRoot(roots, "assets")
+	roots = appendAssetRoot(roots, "MarbleRush/assets")
+	roots = appendAssetRoot(roots, "/MarbleRush/assets")
+	return roots
+}
+
+func appendAssetRoot(roots []string, root string) []string {
+	if root == "" {
+		return roots
+	}
+	for _, existing := range roots {
+		if existing == root {
+			return roots
+		}
+	}
+	return append(roots, root)
+}
+
 func (w *World) spawnPlayer() {
-	w.player = w.scene.Spawn(scene3d.EntityDesc{
-		Position: w.startPosition,
-		Scale:    voplay.Vec3{X: playerRadius, Y: playerRadius, Z: playerRadius},
-		Model:    w.sphereModel,
-		Tint:     w.theme.PlayerColor,
-		TintSet:  true,
-		Tag:      "player",
-		Physics: &scene3d.Physics{
-			Type:          scene3d.Dynamic,
-			Collider:      scene3d.Sphere(playerRadius),
-			Layer:         voplay.CollisionLayerDefault,
-			Mask:          voplay.CollisionMaskAll,
-			Density:       1.0,
-			Friction:      0.9,
-			Restitution:   0.0,
-			LinearDamping: 0.8,
-		},
-	})
+	w.player = w.scene.Spawn(scene3d.EntityDesc{Position: w.startPosition, Scale: voplay.Vec3{X: playerRadius, Y: playerRadius, Z: playerRadius}, Model: w.sphereModel, Tint: w.theme.PlayerColor, TintSet: true, Tag: "player", Physics: &scene3d.Physics{Type: scene3d.Dynamic, Collider: scene3d.Sphere(playerRadius), Layer: voplay.CollisionLayerDefault, Mask: voplay.CollisionMaskAll, Density: 1.0, Friction: 0.9, Restitution: 0.0, LinearDamping: 0.8}})
 }
 
 func (w *World) setupCamera() {
 	w.camera = scene3d.NewThirdPersonCamera(w.player)
-	w.camera.Distance = 8.2
-	w.camera.MinDistance = 4.0
-	w.camera.MaxDistance = 13.5
-	w.camera.PivotOffset = voplay.Vec3{Y: 0.9}
+	w.camera.Distance = 9.8
+	w.camera.MinDistance = 5.0
+	w.camera.MaxDistance = 14.5
+	w.camera.PivotOffset = voplay.Vec3{Y: 1.35}
 	w.camera.CollisionEnabled = true
 	w.camera.UpdateCamera(&w.scene.Camera, w.scene, 0)
 }
 
 func (w *World) FixedUpdate(g *voplay.GameCtx, dt float64) {
+	if g.Actions.IsPressed("reset") {
+		w.restartRun()
+		return
+	}
+	w.updateGameplay(dt)
+	if w.finished {
+		w.scene.StepAndSyncPhysics(dt)
+		return
+	}
 	w.applyPlayerDrive(w.playerWishDirection(g), dt)
 	w.scene.StepAndSyncPhysics(dt)
 	if w.player.Position().Y < playerResetY {
-		w.resetPlayer()
+		w.respawnAtCheckpoint()
 	}
 }
 
@@ -100,7 +203,7 @@ func (w *World) playerWishDirection(g *voplay.GameCtx) voplay.Vec3 {
 	forward := w.scene.Camera.Target.Sub(w.scene.Camera.Position)
 	forward.Y = 0
 	forward = forward.Normalize()
-	right := voplay.Vec3{X: forward.Z, Y: 0, Z: -forward.X}
+	right := voplay.Vec3{X: -forward.Z, Y: 0, Z: forward.X}
 	wish := right.Scale(moveX).Add(forward.Scale(moveZ))
 	if wish.LengthSq() == 0 {
 		return voplay.Vec3{}
@@ -144,7 +247,7 @@ func (w *World) isPlayerGrounded() bool {
 		if other == nil || !other.Active {
 			continue
 		}
-		if other.Position().Y <= playerPos.Y-playerGroundSnapY {
+		if other.Position().Y <= playerPos.Y - playerGroundSnapY {
 			return true
 		}
 	}
@@ -164,9 +267,6 @@ func moveTowardsVec3(current, target voplay.Vec3, maxDelta float64) voplay.Vec3 
 }
 
 func (w *World) Update(g *voplay.GameCtx, dt float64) {
-	if g.Actions.IsPressed("reset") {
-		w.resetPlayer()
-	}
 	if g.Input.IsPointerDown(0) {
 		dx, dy := g.Input.PointerDelta()
 		w.camera.HandleInputScaled(dx, dy, cameraLookSensitivity)
@@ -182,19 +282,42 @@ func (w *World) Update(g *voplay.GameCtx, dt float64) {
 
 func (w *World) Draw(g *voplay.GameCtx, debugOverlayVisible bool) {
 	w.scene.Draw(g.Draw)
-	drawWorldHUD(w.theme, g, debugOverlayVisible)
+	drawWorldHUD(w.theme, g, w.hudState(debugOverlayVisible))
 }
 
 func (w *World) resetPlayer() {
-	w.player.SetPosition(w.startPosition)
-	w.player.SetRotation(voplay.QuatIdentity())
-	w.player.SetVelocity(voplay.Vec3{})
-	w.camera.UpdateCamera(&w.scene.Camera, w.scene, 0)
+	w.respawnAtCheckpoint()
+}
+
+func (w *World) hudState(debugOverlayVisible bool) WorldHUDState {
+	return WorldHUDState{
+		Time: w.courseTime,
+		FinishTime: w.finishTime,
+		Collected: w.collected,
+		TotalCollectibles: len(w.collectibles),
+		Checkpoint: w.checkpointLabel,
+		Message: w.message,
+		MessageTimer: w.messageTimer,
+		Finished: w.finished,
+		DebugOverlayVisible: debugOverlayVisible,
+	}
 }
 
 func (w *World) Close() {
 	if w.scene != nil {
+		w.scene.Skybox = 0
 		w.scene.Close()
+	}
+	if w.assets != nil {
+		if w.assetGroup != "" {
+			w.assets.ReleaseGroup(w.assetGroup)
+			w.assetGroup = ""
+		}
+		if w.assetPackPath != "" {
+			_ = w.assets.Unmount(w.assetPackPath)
+			w.assetPackPath = ""
+		}
+		w.assets = nil
 	}
 	if w.sphereModel != 0 {
 		w.sphereModel.Free()

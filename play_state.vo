@@ -1,10 +1,12 @@
 package main
 
-import "github.com/vo-lang/voplay"
+import (
+	"github.com/vo-lang/voplay"
+)
 
 type PlayState struct {
-	world               *World
-	elapsed             float64
+	world *World
+	elapsed float64
 	debugOverlayVisible bool
 }
 
@@ -16,7 +18,7 @@ func (s *PlayState) Enter(g *voplay.GameCtx) {
 	s.elapsed = 0
 	bindGameActions(g)
 	s.applyDebugOverlay(g)
-	s.world = NewWorld()
+	s.world = NewWorld(g)
 }
 
 func (s *PlayState) Exit(g *voplay.GameCtx) {

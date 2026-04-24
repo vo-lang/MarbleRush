@@ -6,10 +6,9 @@ import "github.com/vo-lang/voplay"
 func main() {
 	vogui.SetTheme(vogui.DefaultTheme())
 	voplay.Run(voplay.Game{
-		Width:             1280,
-		Height:            720,
-		Title:             "MarbleRush",
-		UncappedFrameRate: true,
-		InitialState:      NewPlayState(),
+		Width:        1280,
+		Height:       720,
+		Title:        "MarbleRush",
+		InitialState: NewPlayState(),
 	})
 }

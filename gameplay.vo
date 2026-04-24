@@ -1,0 +1,216 @@
+package main
+
+import (
+	"math"
+
+	"github.com/vo-lang/voplay"
+	"github.com/vo-lang/voplay/scene3d"
+)
+
+const (
+	collectibleRadius = 1.35
+	checkpointRadius = 2.45
+	goalRadius = 3.0
+)
+
+type Collectible struct {
+	Core *scene3d.Entity
+	Glow *scene3d.Entity
+	Position voplay.Vec3
+	Collected bool
+}
+
+type Checkpoint struct {
+	Position voplay.Vec3
+	Respawn voplay.Vec3
+	Label string
+	Radius float64
+	Reached bool
+}
+
+type GoalZone struct {
+	Position voplay.Vec3
+	Radius float64
+}
+
+type MovingObstacle struct {
+	Entity *scene3d.Entity
+	Origin voplay.Vec3
+	Axis voplay.Vec3
+	Amplitude float64
+	Speed float64
+	Phase float64
+}
+
+func (w *World) addCollectible(position voplay.Vec3, tag string) {
+	core := w.spawnDecoSphere(position, voplay.Vec3{X: 0.46, Y: 0.46, Z: 0.46}, w.theme.OrbColor, tag+"_core")
+	w.collectibles = append(w.collectibles, &Collectible{Core: core, Position: position})
+}
+
+func (w *World) addCollectibleLine(start, end voplay.Vec3, count int, tag string) {
+	if count <= 1 {
+		w.addCollectible(start, tag+"_0")
+		return
+	}
+	for i := 0; i < count; i++ {
+		t := float64(i) / float64(count-1)
+		w.addCollectible(start.Lerp(end, t), tag+"_"+itoa(i))
+	}
+}
+
+func (w *World) addCheckpoint(position, respawn voplay.Vec3, label string) {
+	w.checkpoints = append(w.checkpoints, &Checkpoint{Position: position, Respawn: respawn, Label: label, Radius: checkpointRadius})
+}
+
+func (w *World) setGoal(position voplay.Vec3) {
+	w.goal = GoalZone{Position: position, Radius: goalRadius}
+}
+
+func (w *World) addMovingObstacle(position, scale, axis voplay.Vec3, amplitude, speed, phase float64, tag string) {
+	entity := w.spawnStaticBox(position, voplay.QuatIdentity(), scale, w.theme.HazardColor, tag)
+	w.obstacles = append(w.obstacles, &MovingObstacle{Entity: entity, Origin: position, Axis: axis.Normalize(), Amplitude: amplitude, Speed: speed, Phase: phase})
+}
+
+func (w *World) updateGameplay(dt float64) {
+	if !w.finished {
+		w.courseTime += dt
+	}
+	w.messageTimer = maxFloat(0, w.messageTimer-dt)
+	w.updateMovingObstacles()
+	w.updateCollectibles()
+	w.updateCheckpoints()
+	w.updateGoal()
+}
+
+func (w *World) updateMovingObstacles() {
+	for _, obstacle := range w.obstacles {
+		if obstacle == nil || obstacle.Entity == nil {
+			continue
+		}
+		offset := math.Sin(w.courseTime*obstacle.Speed+obstacle.Phase) * obstacle.Amplitude
+		obstacle.Entity.SetPosition(obstacle.Origin.Add(obstacle.Axis.Scale(offset)))
+	}
+}
+
+func (w *World) updateCollectibles() {
+	if w.player == nil {
+		return
+	}
+	playerPos := w.player.Position()
+	for _, item := range w.collectibles {
+		if item == nil || item.Collected {
+			continue
+		}
+		if playerPos.Distance(item.Position) > collectibleRadius {
+			continue
+		}
+		item.Collected = true
+		w.collected++
+		w.message = "Orb collected"
+		w.messageTimer = 1.1
+		hideEntity(item.Core)
+		hideEntity(item.Glow)
+	}
+}
+
+func (w *World) updateCheckpoints() {
+	if w.player == nil {
+		return
+	}
+	playerPos := w.player.Position()
+	for _, checkpoint := range w.checkpoints {
+		if checkpoint == nil || checkpoint.Reached {
+			continue
+		}
+		if playerPos.Distance(checkpoint.Position) > checkpoint.Radius {
+			continue
+		}
+		checkpoint.Reached = true
+		w.checkpointPosition = checkpoint.Respawn
+		w.checkpointLabel = checkpoint.Label
+		w.message = "Checkpoint: " + checkpoint.Label
+		w.messageTimer = 1.7
+	}
+}
+
+func (w *World) updateGoal() {
+	if w.finished || w.player == nil || w.goal.Radius == 0 {
+		return
+	}
+	if w.player.Position().Distance(w.goal.Position) > w.goal.Radius {
+		return
+	}
+	w.finished = true
+	w.finishTime = w.courseTime
+	w.message = "Finish!"
+	w.messageTimer = 99
+	w.player.SetVelocity(voplay.Vec3{})
+}
+
+func (w *World) respawnAtCheckpoint() {
+	w.player.SetPosition(w.checkpointPosition)
+	w.player.SetRotation(voplay.QuatIdentity())
+	w.player.SetVelocity(voplay.Vec3{})
+	w.camera.UpdateCamera(&w.scene.Camera, w.scene, 0)
+	w.message = "Back to " + w.checkpointLabel
+	w.messageTimer = 1.2
+}
+
+func (w *World) restartRun() {
+	w.courseTime = 0
+	w.finishTime = 0
+	w.finished = false
+	w.collected = 0
+	w.checkpointPosition = w.startPosition
+	w.checkpointLabel = "Start"
+	for _, checkpoint := range w.checkpoints {
+		if checkpoint != nil {
+			checkpoint.Reached = false
+		}
+	}
+	for _, item := range w.collectibles {
+		if item == nil {
+			continue
+		}
+		item.Collected = false
+		showEntity(item.Core)
+		showEntity(item.Glow)
+	}
+	w.respawnAtCheckpoint()
+	w.message = "Go!"
+	w.messageTimer = 1.1
+}
+
+func hideEntity(e *scene3d.Entity) {
+	if e != nil {
+		e.Visible = false
+	}
+}
+
+func showEntity(e *scene3d.Entity) {
+	if e != nil {
+		e.Visible = true
+	}
+}
+
+func maxFloat(a, b float64) float64 {
+	if a > b {
+		return a
+	}
+	return b
+}
+
+func itoa(value int) string {
+	digits := "0123456789"
+	if value == 0 {
+		return "0"
+	}
+	out := ""
+	n := value
+	for n > 0 {
+		d := n % 10
+		out = digits[d:d+1] + out
+		n = n / 10
+	}
+	return out
+}

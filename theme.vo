@@ -1,132 +1,123 @@
 package main
 
-import "github.com/vo-lang/voplay"
-import "github.com/vo-lang/voplay/scene3d"
+import (
+	"fmt"
+
+	"github.com/vo-lang/voplay"
+	"github.com/vo-lang/voplay/scene3d"
+)
 
 type WorldTheme struct {
-	SkyColor           voplay.Color
-	FogColor           voplay.Color
-	AmbientColor       voplay.Color
-	GroundColor        voplay.Color
-	PathColor          voplay.Color
-	BridgeColor        voplay.Color
-	WallColor          voplay.Color
-	RailColor          voplay.Color
-	RampColor          voplay.Color
-	AccentColor        voplay.Color
-	BarrierColor       voplay.Color
-	CheckpointColor    voplay.Color
-	BannerColor        voplay.Color
-	SupportColor       voplay.Color
-	GoalColor          voplay.Color
-	GoalTrimColor      voplay.Color
-	PlayerColor        voplay.Color
-	TreeTrunkColor     voplay.Color
-	TreeLeafColor      voplay.Color
-	BushColor          voplay.Color
-	CloudColor         voplay.Color
-	CloudShadowColor   voplay.Color
-	OrbColor           voplay.Color
-	HudPanelColor      voplay.Color
-	HudShadowColor     voplay.Color
-	HudTrimColor       voplay.Color
-	HudTextColor       voplay.Color
-	HudSubtextColor    voplay.Color
+	SkyColor voplay.Color
+	FogColor voplay.Color
+	AmbientColor voplay.Color
+	GroundColor voplay.Color
+	PathColor voplay.Color
+	BridgeColor voplay.Color
+	WallColor voplay.Color
+	RailColor voplay.Color
+	RampColor voplay.Color
+	AccentColor voplay.Color
+	BarrierColor voplay.Color
+	HazardColor voplay.Color
+	CheckpointColor voplay.Color
+	BannerColor voplay.Color
+	SupportColor voplay.Color
+	GoalColor voplay.Color
+	GoalTrimColor voplay.Color
+	PlayerColor voplay.Color
+	TreeTrunkColor voplay.Color
+	TreeLeafColor voplay.Color
+	BushColor voplay.Color
+	CloudColor voplay.Color
+	CloudShadowColor voplay.Color
+	OrbColor voplay.Color
+	HudPanelColor voplay.Color
+	HudShadowColor voplay.Color
+	HudTrimColor voplay.Color
+	HudTextColor voplay.Color
+	HudSubtextColor voplay.Color
 	HudAccentTextColor voplay.Color
 }
 
 func defaultWorldTheme() WorldTheme {
-	return WorldTheme{
-		SkyColor:           voplay.Hex(0x8cdeff),
-		FogColor:           voplay.Hex(0xe0f8ff),
-		AmbientColor:       voplay.Hex(0xd0ecff),
-		GroundColor:        voplay.Hex(0x67c96d),
-		PathColor:          voplay.Hex(0xffefb2),
-		BridgeColor:        voplay.Hex(0xf6bf73),
-		WallColor:          voplay.Hex(0x60789d),
-		RailColor:          voplay.Hex(0xfff8df),
-		RampColor:          voplay.Hex(0xff916c),
-		AccentColor:        voplay.Hex(0xffd44b),
-		BarrierColor:       voplay.Hex(0x33486f),
-		CheckpointColor:    voplay.Hex(0x39d8c5),
-		BannerColor:        voplay.Hex(0xf55367),
-		SupportColor:       voplay.Hex(0x7c95b6),
-		GoalColor:          voplay.Hex(0xff5b67),
-		GoalTrimColor:      voplay.Hex(0xffdf59),
-		PlayerColor:        voplay.Hex(0x3c7dff),
-		TreeTrunkColor:     voplay.Hex(0x8d643b),
-		TreeLeafColor:      voplay.Hex(0x35b96b),
-		BushColor:          voplay.Hex(0x2fc35c),
-		CloudColor:         voplay.Hex(0xffffff),
-		CloudShadowColor:   voplay.Hex(0xd7eef8),
-		OrbColor:           voplay.Hex(0xffea83),
-		HudPanelColor:      voplay.Hex(0x10233d),
-		HudShadowColor:     voplay.Hex(0x08111e),
-		HudTrimColor:       voplay.Hex(0x3b7eff),
-		HudTextColor:       voplay.Hex(0xffffff),
-		HudSubtextColor:    voplay.Hex(0xd9efff),
-		HudAccentTextColor: voplay.Hex(0xfff2b0),
-	}
+	return WorldTheme{SkyColor: voplay.Hex(0x8fdfff), FogColor: voplay.Hex(0xe8fbff), AmbientColor: voplay.Hex(0xdaf3ff), GroundColor: voplay.Hex(0x67c96d), PathColor: voplay.Hex(0xffefb2), BridgeColor: voplay.Hex(0xf6bf73), WallColor: voplay.Hex(0x60789d), RailColor: voplay.Hex(0xfff8df), RampColor: voplay.Hex(0xffbf68), AccentColor: voplay.Hex(0xffd44b), BarrierColor: voplay.Hex(0x33486f), HazardColor: voplay.Hex(0xf23b58), CheckpointColor: voplay.Hex(0x39d8c5), BannerColor: voplay.Hex(0xf55367), SupportColor: voplay.Hex(0x7c95b6), GoalColor: voplay.Hex(0xff5b67), GoalTrimColor: voplay.Hex(0xffdf59), PlayerColor: voplay.Hex(0x3c7dff), TreeTrunkColor: voplay.Hex(0x8d643b), TreeLeafColor: voplay.Hex(0x35b96b), BushColor: voplay.Hex(0x2fc35c), CloudColor: voplay.Hex(0xffffff), CloudShadowColor: voplay.Hex(0xd7eef8), OrbColor: voplay.Hex(0xffea83), HudPanelColor: voplay.Hex(0x10233d), HudShadowColor: voplay.Hex(0x08111e), HudTrimColor: voplay.Hex(0x3b7eff), HudTextColor: voplay.Hex(0xffffff), HudSubtextColor: voplay.Hex(0xd9efff), HudAccentTextColor: voplay.Hex(0xfff2b0)}
 }
 
 func applyWorldTheme(theme WorldTheme, scene *scene3d.Scene) {
-	scene.Camera.Fov = 54
+	scene.Camera.Fov = 58
 	scene.Ambient = theme.AmbientColor
-	scene.Fog = scene3d.FogConfig{
-		Mode:  scene3d.FogLinear,
-		Color: theme.FogColor,
-		Start: 28,
-		End:   96,
-	}
-	scene.AddLight(scene3d.Light{
-		Type:      scene3d.DirectionalLight,
-		Direction: voplay.Vec3{X: -0.36, Y: -1.0, Z: -0.14}.Normalize(),
-		Color:     voplay.White,
-		Intensity: 1.5,
-	})
-	scene.AddLight(scene3d.Light{
-		Type:      scene3d.DirectionalLight,
-		Direction: voplay.Vec3{X: 0.48, Y: -0.32, Z: 0.3}.Normalize(),
-		Color:     theme.FogColor,
-		Intensity: 0.38,
-	})
+	scene.Fog = scene3d.FogConfig{Mode: scene3d.FogLinear, Color: theme.FogColor, Start: 28, End: 96}
+	scene.AddLight(scene3d.Light{Type: scene3d.DirectionalLight, Direction: voplay.Vec3{X: -0.38, Y: 0.54, Z: -0.75}.Normalize(), Color: voplay.Hex(0xfff0bf), Intensity: 1.38})
+	scene.AddLight(scene3d.Light{Type: scene3d.DirectionalLight, Direction: voplay.Vec3{X: -0.55, Y: 0.35, Z: -0.28}.Normalize(), Color: theme.FogColor, Intensity: 0.34})
 }
 
-func drawWorldHUD(theme WorldTheme, g *voplay.GameCtx, showDebugOverlay bool) {
-	drawHudPanel(g.Draw, theme, 24, 22, 410, 94, 0.88)
-	g.Draw.DrawRect(24, 22, 410, 10, theme.HudTrimColor)
+type WorldHUDState struct {
+	Time float64
+	FinishTime float64
+	Collected int
+	TotalCollectibles int
+	Checkpoint string
+	Message string
+	MessageTimer float64
+	Finished bool
+	DebugOverlayVisible bool
+}
+
+func drawWorldHUD(theme WorldTheme, g *voplay.GameCtx, hud WorldHUDState) {
+	drawHudPanel(g.Draw, theme, 24, 22, 430, 112, 0.88)
+	g.Draw.DrawRect(24, 22, 430, 10, theme.HudTrimColor)
 	g.Draw.DrawText("Marble Rush", 42, 58, 30, theme.HudTextColor)
 	g.Draw.DrawText("Toybox Ascent", 42, 86, 20, theme.HudAccentTextColor)
-	g.Draw.DrawText("Roll through the celebration arch.", 42, 110, 18, theme.HudSubtextColor)
-
-	courseX := float64(g.Width - 250 - 24)
+	g.Draw.DrawText("Race the arch. Greed the orbs.", 42, 112, 18, theme.HudSubtextColor)
+	courseX := float64(g.Width - 330 - 24)
 	if courseX < 24 {
 		courseX = 24
 	}
-	drawHudPanel(g.Draw, theme, courseX, 22, 250, 66, 0.86)
-	g.Draw.DrawRect(courseX, 22, 250, 8, theme.GoalTrimColor)
-	g.Draw.DrawText("Course 1", courseX+18, 52, 18, theme.HudAccentTextColor)
-	g.Draw.DrawText("Skyway Sprint", courseX+18, 78, 24, theme.HudTextColor)
-
-	bottomPanelY := float64(g.Height - 58)
-	bottomTextY := float64(g.Height - 34)
-	drawHudPanel(g.Draw, theme, 24, bottomPanelY, 560, 36, 0.82)
-	g.Draw.DrawText("R reset   Hold left mouse to orbit   Wheel zoom", 40, bottomTextY, 18, theme.HudSubtextColor)
-
-	debugText := "F3 debug HUD: off"
-	if showDebugOverlay {
-		debugText = "F3 debug HUD: on"
+	drawHudPanel(g.Draw, theme, courseX, 22, 330, 100, 0.86)
+	g.Draw.DrawRect(courseX, 22, 330, 8, theme.GoalTrimColor)
+	g.Draw.DrawText("Time "+formatTime(hud.Time), courseX+18, 54, 24, theme.HudTextColor)
+	g.Draw.DrawText("Orbs "+itoa(hud.Collected)+"/"+itoa(hud.TotalCollectibles), courseX+18, 82, 20, theme.HudAccentTextColor)
+	g.Draw.DrawText("Checkpoint "+hud.Checkpoint, courseX+18, 108, 18, theme.HudSubtextColor)
+	bottomPanelY := float64(g.Height - 48)
+	bottomTextY := float64(g.Height - 26)
+	drawHudPanel(g.Draw, theme, 24, bottomPanelY, 420, 28, 0.72)
+	g.Draw.DrawText("R restart   Mouse orbit   Wheel zoom", 38, bottomTextY, 16, theme.HudSubtextColor)
+	if hud.DebugOverlayVisible {
+		debugX := float64(g.Width - 160 - 24)
+		if debugX < 24 {
+			debugX = 24
+		}
+		drawHudPanel(g.Draw, theme, debugX, float64(g.Height - 48), 160, 28, 0.78)
+		g.Draw.DrawRect(debugX, float64(g.Height - 48), 160, 5, theme.AccentColor)
+		g.Draw.DrawText("F3 debug", debugX + 14, float64(g.Height - 26), 16, theme.HudTextColor)
 	}
-	debugX := float64(g.Width - 230 - 24)
-	if debugX < 24 {
-		debugX = 24
+	if hud.MessageTimer > 0 && !hud.Finished {
+		msgW := 340.0
+		msgX := (float64(g.Width) - msgW) * 0.5
+		drawHudPanel(g.Draw, theme, msgX, 132, msgW, 42, 0.82)
+		g.Draw.DrawRect(msgX, 132, msgW, 6, theme.AccentColor)
+		g.Draw.DrawText(hud.Message, msgX+24, 162, 22, theme.HudTextColor)
 	}
-	drawHudPanel(g.Draw, theme, debugX, float64(g.Height-58), 230, 36, 0.84)
-	g.Draw.DrawRect(debugX, float64(g.Height-58), 230, 6, theme.AccentColor)
-	g.Draw.DrawText(debugText, debugX+16, float64(g.Height-34), 18, theme.HudTextColor)
+	if hud.Finished {
+		panelW := 430.0
+		panelH := 170.0
+		panelX := (float64(g.Width) - panelW) * 0.5
+		panelY := (float64(g.Height) - panelH) * 0.5
+		drawHudPanel(g.Draw, theme, panelX, panelY, panelW, panelH, 0.92)
+		g.Draw.DrawRect(panelX, panelY, panelW, 10, theme.GoalTrimColor)
+		g.Draw.DrawText("FINISH!", panelX+128, panelY+52, 38, theme.HudAccentTextColor)
+		g.Draw.DrawText("Time "+formatTime(hud.FinishTime), panelX+54, panelY+92, 24, theme.HudTextColor)
+		g.Draw.DrawText("Orbs "+itoa(hud.Collected)+"/"+itoa(hud.TotalCollectibles), panelX+54, panelY+122, 22, theme.HudSubtextColor)
+		g.Draw.DrawText("Press R to run it back", panelX+54, panelY+150, 20, theme.HudAccentTextColor)
+	}
 }
 
 func drawHudPanel(d *voplay.DrawCtx, theme WorldTheme, x, y, width, height float64, alpha float64) {
-	d.DrawRect(x+4, y+5, width, height, theme.HudShadowColor.WithAlpha(0.18))
+	d.DrawRect(x + 4, y + 5, width, height, theme.HudShadowColor.WithAlpha(0.18))
 	d.DrawRect(x, y, width, height, theme.HudPanelColor.WithAlpha(alpha))
+}
+
+func formatTime(seconds float64) string {
+	return fmt.Sprintf("%.1fs", seconds)
 }

@@ -1,0 +1,32 @@
+package main
+
+import (
+	"github.com/vo-lang/vopack"
+	"os"
+)
+
+const assetPackPath = "assets/marblerush.vpak"
+
+func must(err error) {
+	if err != nil {
+		panic(err.Error())
+	}
+}
+
+func addPackFile(w *vopack.PackWriter, name string, path string) {
+	must(w.AddFile(name, path, vopack.EntryOpts{}))
+}
+
+func main() {
+	must(os.MkdirAll("assets", 0755))
+	w, err := vopack.Create(assetPackPath)
+	must(err)
+	addPackFile(w, "skybox/right.png", "assets/skybox/right.png")
+	addPackFile(w, "skybox/left.png", "assets/skybox/left.png")
+	addPackFile(w, "skybox/top.png", "assets/skybox/top.png")
+	addPackFile(w, "skybox/bottom.png", "assets/skybox/bottom.png")
+	addPackFile(w, "skybox/front.png", "assets/skybox/front.png")
+	addPackFile(w, "skybox/back.png", "assets/skybox/back.png")
+	must(w.Close())
+	println("packed", assetPackPath)
+}
