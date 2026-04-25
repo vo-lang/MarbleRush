@@ -72,6 +72,7 @@ func bindGameActions(g *voplay.GameCtx) {
 	g.Actions.Rebind("move_right", voplay.KeyBinding("d"), voplay.KeyBinding("ArrowRight"))
 	g.Actions.Rebind("move_forward", voplay.KeyBinding("w"), voplay.KeyBinding("ArrowUp"))
 	g.Actions.Rebind("move_back", voplay.KeyBinding("s"), voplay.KeyBinding("ArrowDown"))
+	g.Actions.Rebind("drift", voplay.KeyBinding("Space"))
 	g.Actions.Rebind("reset", voplay.KeyBinding("r"))
 	g.Actions.Rebind("toggle_debug_overlay", voplay.KeyBinding("F3"))
 }

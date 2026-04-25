@@ -1,0 +1,97 @@
+package main
+
+import (
+	"errors"
+	"path/filepath"
+	"github.com/vo-lang/voplay/scene3d"
+)
+
+const (
+	demoMapPackPath = "maps/demo_track/map.json"
+	demoMapFilePath = "assets/maps/demo_track/map.json"
+	mapAssetGroup = "marblerush-map"
+)
+
+func (w *World) loadDemoMap() {
+	result, err := w.loadDemoMapFromAssets()
+	if err != nil && result == nil {
+		result, err = w.loadDemoMapFromFiles()
+	}
+	if err != nil {
+		w.message = "Map load failed: " + err.Error()
+		w.messageTimer = 4
+		return
+	}
+	w.mapResult = result
+	w.applyDemoMapSpawn(result)
+}
+
+func (w *World) loadDemoMapFromAssets() (*scene3d.MapSpawnResult, error) {
+	if w.assets == nil || w.assetPackPath == "" {
+		return nil, errMapAssetsUnavailable()
+	}
+	w.assets.BeginGroup(mapAssetGroup)
+	result, err := scene3d.LoadMapWithAssets(w.scene, w.assets, demoMapPackPath)
+	if err != nil {
+		result, err = scene3d.LoadMapWithAssets(w.scene, w.assets, demoMapFilePath)
+	}
+	w.assets.EndGroup()
+	if err != nil {
+		w.assets.ReleaseGroup(mapAssetGroup)
+		return nil, err
+	}
+	w.mapAssetGroup = mapAssetGroup
+	return result, nil
+}
+
+func (w *World) loadDemoMapFromFiles() (*scene3d.MapSpawnResult, error) {
+	var lastErr error
+	for _, path := range demoMapFileCandidates() {
+		result, err := scene3d.LoadMap(w.scene, path)
+		if err == nil {
+			return result, nil
+		}
+		lastErr = err
+	}
+	return nil, lastErr
+}
+
+func (w *World) applyDemoMapSpawn(result *scene3d.MapSpawnResult) {
+	if result == nil {
+		return
+	}
+	spawn, ok := result.Spawns["player_start"]
+	if !ok {
+		return
+	}
+	w.startPosition = spawn.Position.Vec3()
+	w.startYaw = spawn.Yaw
+	w.checkpointPosition = w.startPosition
+	w.checkpointYaw = w.startYaw
+	w.kartYaw = w.startYaw
+}
+
+func demoMapFileCandidates() []string {
+	paths := []string{}
+	for _, root := range assetRootCandidates() {
+		paths = appendDemoMapPath(paths, filepath.Join([]string{root, "maps", "demo_track", "map.json"}))
+	}
+	paths = appendDemoMapPath(paths, demoMapFilePath)
+	return paths
+}
+
+func appendDemoMapPath(paths []string, path string) []string {
+	if path == "" {
+		return paths
+	}
+	for _, existing := range paths {
+		if existing == path {
+			return paths
+		}
+	}
+	return append(paths, path)
+}
+
+func errMapAssetsUnavailable() error {
+	return errors.New("map assets unavailable")
+}

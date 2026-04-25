@@ -27,6 +27,13 @@ func main() {
 	addPackFile(w, "skybox/bottom.png", "assets/skybox/bottom.png")
 	addPackFile(w, "skybox/front.png", "assets/skybox/front.png")
 	addPackFile(w, "skybox/back.png", "assets/skybox/back.png")
+	addPackFile(w, "maps/demo_track/map.json", "assets/maps/demo_track/map.json")
+	addPackFile(w, "maps/demo_track/heightmap.png", "assets/maps/demo_track/heightmap.png")
+	addPackFile(w, "maps/demo_track/track.glb", "assets/maps/demo_track/track.glb")
+	addPackFile(w, "maps/demo_track/track_collision.glb", "assets/maps/demo_track/track_collision.glb")
+	addPackFile(w, "maps/demo_track/track_texture.png", "assets/maps/demo_track/track_texture.png")
+	addPackFile(w, "models/kart/kart_body.glb", "assets/models/kart/kart_body.glb")
+	addPackFile(w, "models/kart/kart_wheel.glb", "assets/models/kart/kart_wheel.glb")
 	must(w.Close())
 	println("packed", assetPackPath)
 }

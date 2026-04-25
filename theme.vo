@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-
 	"github.com/vo-lang/voplay"
 	"github.com/vo-lang/voplay/scene3d"
 )
@@ -26,6 +25,11 @@ type WorldTheme struct {
 	GoalColor voplay.Color
 	GoalTrimColor voplay.Color
 	PlayerColor voplay.Color
+	KartTrimColor voplay.Color
+	DriverColor voplay.Color
+	WheelColor voplay.Color
+	BoostColor voplay.Color
+	TrackMarkColor voplay.Color
 	TreeTrunkColor voplay.Color
 	TreeLeafColor voplay.Color
 	BushColor voplay.Color
@@ -41,15 +45,15 @@ type WorldTheme struct {
 }
 
 func defaultWorldTheme() WorldTheme {
-	return WorldTheme{SkyColor: voplay.Hex(0x8fdfff), FogColor: voplay.Hex(0xe8fbff), AmbientColor: voplay.Hex(0xdaf3ff), GroundColor: voplay.Hex(0x67c96d), PathColor: voplay.Hex(0xffefb2), BridgeColor: voplay.Hex(0xf6bf73), WallColor: voplay.Hex(0x60789d), RailColor: voplay.Hex(0xfff8df), RampColor: voplay.Hex(0xffbf68), AccentColor: voplay.Hex(0xffd44b), BarrierColor: voplay.Hex(0x33486f), HazardColor: voplay.Hex(0xf23b58), CheckpointColor: voplay.Hex(0x39d8c5), BannerColor: voplay.Hex(0xf55367), SupportColor: voplay.Hex(0x7c95b6), GoalColor: voplay.Hex(0xff5b67), GoalTrimColor: voplay.Hex(0xffdf59), PlayerColor: voplay.Hex(0x3c7dff), TreeTrunkColor: voplay.Hex(0x8d643b), TreeLeafColor: voplay.Hex(0x35b96b), BushColor: voplay.Hex(0x2fc35c), CloudColor: voplay.Hex(0xffffff), CloudShadowColor: voplay.Hex(0xd7eef8), OrbColor: voplay.Hex(0xffea83), HudPanelColor: voplay.Hex(0x10233d), HudShadowColor: voplay.Hex(0x08111e), HudTrimColor: voplay.Hex(0x3b7eff), HudTextColor: voplay.Hex(0xffffff), HudSubtextColor: voplay.Hex(0xd9efff), HudAccentTextColor: voplay.Hex(0xfff2b0)}
+	return WorldTheme{SkyColor: voplay.Hex(0x79d4f2), FogColor: voplay.Hex(0xb2dce6), AmbientColor: voplay.Hex(0x64777f), GroundColor: voplay.Hex(0x67c96d), PathColor: voplay.Hex(0x647d8f), BridgeColor: voplay.Hex(0xf6bf73), WallColor: voplay.Hex(0x60789d), RailColor: voplay.Hex(0xfff8df), RampColor: voplay.Hex(0xffbf68), AccentColor: voplay.Hex(0xffd44b), BarrierColor: voplay.Hex(0x33486f), HazardColor: voplay.Hex(0xf23b58), CheckpointColor: voplay.Hex(0x39d8c5), BannerColor: voplay.Hex(0xf55367), SupportColor: voplay.Hex(0x7c95b6), GoalColor: voplay.Hex(0xff5b67), GoalTrimColor: voplay.Hex(0xffdf59), PlayerColor: voplay.Hex(0x3c7dff), KartTrimColor: voplay.Hex(0xfff27a), DriverColor: voplay.Hex(0xff6f7e), WheelColor: voplay.Hex(0x1f2b3d), BoostColor: voplay.Hex(0x38d8ff), TrackMarkColor: voplay.Hex(0xffffff), TreeTrunkColor: voplay.Hex(0x8d643b), TreeLeafColor: voplay.Hex(0x35b96b), BushColor: voplay.Hex(0x2fc35c), CloudColor: voplay.Hex(0xffffff), CloudShadowColor: voplay.Hex(0xd7eef8), OrbColor: voplay.Hex(0xff8ed1), HudPanelColor: voplay.Hex(0x10233d), HudShadowColor: voplay.Hex(0x08111e), HudTrimColor: voplay.Hex(0x3b7eff), HudTextColor: voplay.Hex(0xffffff), HudSubtextColor: voplay.Hex(0xd9efff), HudAccentTextColor: voplay.Hex(0xfff2b0)}
 }
 
 func applyWorldTheme(theme WorldTheme, scene *scene3d.Scene) {
-	scene.Camera.Fov = 58
+	scene.Camera.Fov = 64
 	scene.Ambient = theme.AmbientColor
-	scene.Fog = scene3d.FogConfig{Mode: scene3d.FogLinear, Color: theme.FogColor, Start: 28, End: 96}
-	scene.AddLight(scene3d.Light{Type: scene3d.DirectionalLight, Direction: voplay.Vec3{X: -0.38, Y: 0.54, Z: -0.75}.Normalize(), Color: voplay.Hex(0xfff0bf), Intensity: 1.38})
-	scene.AddLight(scene3d.Light{Type: scene3d.DirectionalLight, Direction: voplay.Vec3{X: -0.55, Y: 0.35, Z: -0.28}.Normalize(), Color: theme.FogColor, Intensity: 0.34})
+	scene.Fog = scene3d.FogConfig{Mode: scene3d.FogLinear, Color: theme.FogColor, Start: 175, End: 390}
+	scene.AddLight(scene3d.Light{Type: scene3d.DirectionalLight, Direction: voplay.Vec3{X: -0.38, Y: 0.54, Z: -0.75}.Normalize(), Color: voplay.Hex(0xfff0ce), Intensity: 0.9})
+	scene.AddLight(scene3d.Light{Type: scene3d.DirectionalLight, Direction: voplay.Vec3{X: -0.55, Y: 0.35, Z: -0.28}.Normalize(), Color: voplay.Hex(0x86bfd4), Intensity: 0.08})
 }
 
 type WorldHUDState struct {
@@ -58,6 +62,13 @@ type WorldHUDState struct {
 	Collected int
 	TotalCollectibles int
 	Checkpoint string
+	NextGate string
+	Lap int
+	TotalLaps int
+	Speed float64
+	Boosting bool
+	Drifting bool
+	DriftCharge float64
 	Message string
 	MessageTimer float64
 	Finished bool
@@ -67,22 +78,48 @@ type WorldHUDState struct {
 func drawWorldHUD(theme WorldTheme, g *voplay.GameCtx, hud WorldHUDState) {
 	drawHudPanel(g.Draw, theme, 24, 22, 430, 112, 0.88)
 	g.Draw.DrawRect(24, 22, 430, 10, theme.HudTrimColor)
-	g.Draw.DrawText("Marble Rush", 42, 58, 30, theme.HudTextColor)
-	g.Draw.DrawText("Toybox Ascent", 42, 86, 20, theme.HudAccentTextColor)
-	g.Draw.DrawText("Race the arch. Greed the orbs.", 42, 112, 18, theme.HudSubtextColor)
+	g.Draw.DrawText("MarbleRush", 42, 58, 30, theme.HudTextColor)
+	g.Draw.DrawText("Terrain + Track Mesh", 42, 86, 20, theme.HudAccentTextColor)
+	g.Draw.DrawText("Map asset demo", 42, 112, 18, theme.HudSubtextColor)
 	courseX := float64(g.Width - 330 - 24)
 	if courseX < 24 {
 		courseX = 24
 	}
 	drawHudPanel(g.Draw, theme, courseX, 22, 330, 100, 0.86)
 	g.Draw.DrawRect(courseX, 22, 330, 8, theme.GoalTrimColor)
-	g.Draw.DrawText("Time "+formatTime(hud.Time), courseX+18, 54, 24, theme.HudTextColor)
-	g.Draw.DrawText("Orbs "+itoa(hud.Collected)+"/"+itoa(hud.TotalCollectibles), courseX+18, 82, 20, theme.HudAccentTextColor)
-	g.Draw.DrawText("Checkpoint "+hud.Checkpoint, courseX+18, 108, 18, theme.HudSubtextColor)
+	g.Draw.DrawText("Time " + formatTime(hud.Time), courseX + 18, 54, 24, theme.HudTextColor)
+	g.Draw.DrawText("Speed " + itoa(int(hud.Speed + 0.5)), courseX + 18, 82, 20, theme.HudAccentTextColor)
+	g.Draw.DrawText("Loaded demo_track/map.json", courseX + 18, 108, 18, theme.HudSubtextColor)
 	bottomPanelY := float64(g.Height - 48)
 	bottomTextY := float64(g.Height - 26)
-	drawHudPanel(g.Draw, theme, 24, bottomPanelY, 420, 28, 0.72)
-	g.Draw.DrawText("R restart   Mouse orbit   Wheel zoom", 38, bottomTextY, 16, theme.HudSubtextColor)
+	drawHudPanel(g.Draw, theme, 24, bottomPanelY, 650, 28, 0.72)
+	g.Draw.DrawText("W gas   S brake/reverse   A/D steer   Space drift   R restart", 38, bottomTextY, 16, theme.HudSubtextColor)
+	if hud.Boosting {
+		boostX := float64(g.Width - 180)
+		drawHudPanel(g.Draw, theme, boostX, 134, 140, 36, 0.82)
+		g.Draw.DrawRect(boostX, 134, 140, 6, theme.BoostColor)
+		g.Draw.DrawText("BOOST", boostX + 32, 162, 22, theme.HudTextColor)
+	}
+	if hud.Drifting || hud.DriftCharge > 0 {
+		driftX := float64(g.Width - 224)
+		if driftX < 24 {
+			driftX = 24
+		}
+		charge := clampFloat(hud.DriftCharge / kartSuperTurboCharge, 0, 1)
+		label := "DRIFT"
+		fillColor := theme.BoostColor
+		if hud.DriftCharge >= kartSuperTurboCharge {
+			label = "SUPER"
+			fillColor = theme.GoalTrimColor
+		} else if hud.DriftCharge >= kartMiniTurboCharge {
+			label = "MINI"
+			fillColor = theme.AccentColor
+		}
+		drawHudPanel(g.Draw, theme, driftX, 178, 184, 42, 0.82)
+		g.Draw.DrawText(label, driftX + 16, 205, 18, theme.HudTextColor)
+		g.Draw.DrawRect(driftX + 80, 193, 82, 10, theme.HudShadowColor.WithAlpha(0.3))
+		g.Draw.DrawRect(driftX + 80, 193, 82 * charge, 10, fillColor)
+	}
 	if hud.DebugOverlayVisible {
 		debugX := float64(g.Width - 160 - 24)
 		if debugX < 24 {
@@ -97,7 +134,7 @@ func drawWorldHUD(theme WorldTheme, g *voplay.GameCtx, hud WorldHUDState) {
 		msgX := (float64(g.Width) - msgW) * 0.5
 		drawHudPanel(g.Draw, theme, msgX, 132, msgW, 42, 0.82)
 		g.Draw.DrawRect(msgX, 132, msgW, 6, theme.AccentColor)
-		g.Draw.DrawText(hud.Message, msgX+24, 162, 22, theme.HudTextColor)
+		g.Draw.DrawText(hud.Message, msgX + 24, 162, 22, theme.HudTextColor)
 	}
 	if hud.Finished {
 		panelW := 430.0
@@ -106,10 +143,10 @@ func drawWorldHUD(theme WorldTheme, g *voplay.GameCtx, hud WorldHUDState) {
 		panelY := (float64(g.Height) - panelH) * 0.5
 		drawHudPanel(g.Draw, theme, panelX, panelY, panelW, panelH, 0.92)
 		g.Draw.DrawRect(panelX, panelY, panelW, 10, theme.GoalTrimColor)
-		g.Draw.DrawText("FINISH!", panelX+128, panelY+52, 38, theme.HudAccentTextColor)
-		g.Draw.DrawText("Time "+formatTime(hud.FinishTime), panelX+54, panelY+92, 24, theme.HudTextColor)
-		g.Draw.DrawText("Orbs "+itoa(hud.Collected)+"/"+itoa(hud.TotalCollectibles), panelX+54, panelY+122, 22, theme.HudSubtextColor)
-		g.Draw.DrawText("Press R to run it back", panelX+54, panelY+150, 20, theme.HudAccentTextColor)
+		g.Draw.DrawText("RACE COMPLETE!", panelX + 64, panelY + 52, 34, theme.HudAccentTextColor)
+		g.Draw.DrawText("Time " + formatTime(hud.FinishTime), panelX + 54, panelY + 92, 24, theme.HudTextColor)
+		g.Draw.DrawText("Items " + itoa(hud.Collected) + "/" + itoa(hud.TotalCollectibles), panelX + 54, panelY + 122, 22, theme.HudSubtextColor)
+		g.Draw.DrawText("Press R to race again", panelX + 54, panelY + 150, 20, theme.HudAccentTextColor)
 	}
 }
 

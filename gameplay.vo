@@ -2,15 +2,13 @@ package main
 
 import (
 	"math"
-
 	"github.com/vo-lang/voplay"
 	"github.com/vo-lang/voplay/scene3d"
 )
 
 const (
-	collectibleRadius = 1.35
-	checkpointRadius = 2.45
-	goalRadius = 3.0
+	collectibleRadius = 3.35
+	checkpointRadius = 14.0
 )
 
 type Collectible struct {
@@ -23,12 +21,13 @@ type Collectible struct {
 type Checkpoint struct {
 	Position voplay.Vec3
 	Respawn voplay.Vec3
+	Yaw float64
 	Label string
 	Radius float64
 	Reached bool
 }
 
-type GoalZone struct {
+type BoostPad struct {
 	Position voplay.Vec3
 	Radius float64
 }
@@ -43,27 +42,28 @@ type MovingObstacle struct {
 }
 
 func (w *World) addCollectible(position voplay.Vec3, tag string) {
-	core := w.spawnDecoSphere(position, voplay.Vec3{X: 0.46, Y: 0.46, Z: 0.46}, w.theme.OrbColor, tag+"_core")
-	w.collectibles = append(w.collectibles, &Collectible{Core: core, Position: position})
+	core := w.spawnVisualBox(position, voplay.QuatFromAxisAngle(voplay.Vec3{Y: 1}, 0.78), voplay.Vec3{X: 1.15, Y: 1.15, Z: 1.15}, w.theme.OrbColor, tag + "_box")
+	glow := w.spawnDecoSphere(position.Add(voplay.Vec3{Y: -0.12}), voplay.Vec3{X: 1.55, Y: 0.3, Z: 1.55}, w.theme.GoalTrimColor, tag + "_glow")
+	w.collectibles = append(w.collectibles, &Collectible{Core: core, Glow: glow, Position: position})
 }
 
 func (w *World) addCollectibleLine(start, end voplay.Vec3, count int, tag string) {
 	if count <= 1 {
-		w.addCollectible(start, tag+"_0")
+		w.addCollectible(start, tag + "_0")
 		return
 	}
 	for i := 0; i < count; i++ {
-		t := float64(i) / float64(count-1)
-		w.addCollectible(start.Lerp(end, t), tag+"_"+itoa(i))
+		t := float64(i) / float64(count - 1)
+		w.addCollectible(start.Lerp(end, t), tag + "_" + itoa(i))
 	}
 }
 
-func (w *World) addCheckpoint(position, respawn voplay.Vec3, label string) {
-	w.checkpoints = append(w.checkpoints, &Checkpoint{Position: position, Respawn: respawn, Label: label, Radius: checkpointRadius})
+func (w *World) addCheckpoint(position, respawn voplay.Vec3, yaw float64, label string) {
+	w.checkpoints = append(w.checkpoints, &Checkpoint{Position: position, Respawn: respawn, Yaw: yaw, Label: label, Radius: checkpointRadius})
 }
 
-func (w *World) setGoal(position voplay.Vec3) {
-	w.goal = GoalZone{Position: position, Radius: goalRadius}
+func (w *World) addBoostPad(position voplay.Vec3, radius float64) {
+	w.boostPads = append(w.boostPads, &BoostPad{Position: position, Radius: radius})
 }
 
 func (w *World) addMovingObstacle(position, scale, axis voplay.Vec3, amplitude, speed, phase float64, tag string) {
@@ -75,11 +75,12 @@ func (w *World) updateGameplay(dt float64) {
 	if !w.finished {
 		w.courseTime += dt
 	}
-	w.messageTimer = maxFloat(0, w.messageTimer-dt)
+	w.messageTimer = maxFloat(0, w.messageTimer - dt)
 	w.updateMovingObstacles()
 	w.updateCollectibles()
-	w.updateCheckpoints()
-	w.updateGoal()
+	w.updateBoostPads()
+	w.updateRaceProgress()
+	w.boostTimer = maxFloat(0, w.boostTimer - dt)
 }
 
 func (w *World) updateMovingObstacles() {
@@ -87,7 +88,7 @@ func (w *World) updateMovingObstacles() {
 		if obstacle == nil || obstacle.Entity == nil {
 			continue
 		}
-		offset := math.Sin(w.courseTime*obstacle.Speed+obstacle.Phase) * obstacle.Amplitude
+		offset := math.Sin(w.courseTime * obstacle.Speed + obstacle.Phase) * obstacle.Amplitude
 		obstacle.Entity.SetPosition(obstacle.Origin.Add(obstacle.Axis.Scale(offset)))
 	}
 }
@@ -106,51 +107,102 @@ func (w *World) updateCollectibles() {
 		}
 		item.Collected = true
 		w.collected++
-		w.message = "Orb collected"
+		w.activateBoost(kartItemBoostDuration)
+		w.message = "Item boost!"
 		w.messageTimer = 1.1
 		hideEntity(item.Core)
 		hideEntity(item.Glow)
 	}
 }
 
-func (w *World) updateCheckpoints() {
+func (w *World) updateBoostPads() {
 	if w.player == nil {
 		return
 	}
 	playerPos := w.player.Position()
-	for _, checkpoint := range w.checkpoints {
-		if checkpoint == nil || checkpoint.Reached {
+	for _, pad := range w.boostPads {
+		if pad == nil {
 			continue
 		}
-		if playerPos.Distance(checkpoint.Position) > checkpoint.Radius {
+		if playerPos.Distance(pad.Position) > pad.Radius {
 			continue
 		}
-		checkpoint.Reached = true
-		w.checkpointPosition = checkpoint.Respawn
-		w.checkpointLabel = checkpoint.Label
-		w.message = "Checkpoint: " + checkpoint.Label
-		w.messageTimer = 1.7
+		if w.boostTimer < 0.25 {
+			w.message = "Boost pad!"
+			w.messageTimer = 0.8
+		}
+		w.activateBoost(kartBoostPadDuration)
 	}
 }
 
-func (w *World) updateGoal() {
-	if w.finished || w.player == nil || w.goal.Radius == 0 {
+func (w *World) updateRaceProgress() {
+	if w.finished || w.player == nil || len(w.checkpoints) == 0 {
 		return
 	}
-	if w.player.Position().Distance(w.goal.Position) > w.goal.Radius {
+	if w.nextCheckpoint < 0 || w.nextCheckpoint >= len(w.checkpoints) {
+		w.nextCheckpoint = 0
+	}
+	checkpoint := w.checkpoints[w.nextCheckpoint]
+	if checkpoint == nil {
 		return
 	}
-	w.finished = true
-	w.finishTime = w.courseTime
-	w.message = "Finish!"
-	w.messageTimer = 99
-	w.player.SetVelocity(voplay.Vec3{})
+	if w.player.Position().Distance(checkpoint.Position) > checkpoint.Radius {
+		return
+	}
+	checkpoint.Reached = true
+	w.checkpointPosition = checkpoint.Respawn
+	w.checkpointYaw = checkpoint.Yaw
+	w.checkpointLabel = checkpoint.Label
+	if w.nextCheckpoint == len(w.checkpoints) - 1 {
+		if w.lap >= w.totalLaps {
+			w.finished = true
+			w.finishTime = w.courseTime
+			w.nextGateLabel = "Done"
+			w.message = "Race complete!"
+			w.messageTimer = 99
+			w.player.SetVelocity(voplay.Vec3{})
+			if w.vehicle != nil {
+				w.vehicle.Speed = 0
+			}
+			w.kartSpeed = 0
+			return
+		}
+		w.lap++
+		w.nextCheckpoint = 0
+		w.refreshNextGateLabel()
+		for _, gate := range w.checkpoints {
+			if gate != nil {
+				gate.Reached = false
+			}
+		}
+		w.message = "Lap " + itoa(w.lap) + "/" + itoa(w.totalLaps)
+		w.messageTimer = 1.3
+		return
+	}
+	w.nextCheckpoint++
+	w.refreshNextGateLabel()
+	w.message = "Gate: " + checkpoint.Label
+	w.messageTimer = 1.0
+}
+
+func (w *World) refreshNextGateLabel() {
+	if len(w.checkpoints) == 0 {
+		w.nextGateLabel = "Start"
+		return
+	}
+	if w.nextCheckpoint < 0 || w.nextCheckpoint >= len(w.checkpoints) {
+		w.nextCheckpoint = 0
+	}
+	checkpoint := w.checkpoints[w.nextCheckpoint]
+	if checkpoint == nil {
+		w.nextGateLabel = "Gate"
+		return
+	}
+	w.nextGateLabel = checkpoint.Label
 }
 
 func (w *World) respawnAtCheckpoint() {
-	w.player.SetPosition(w.checkpointPosition)
-	w.player.SetRotation(voplay.QuatIdentity())
-	w.player.SetVelocity(voplay.Vec3{})
+	w.setKartPose(w.checkpointPosition, w.checkpointYaw)
 	w.camera.UpdateCamera(&w.scene.Camera, w.scene, 0)
 	w.message = "Back to " + w.checkpointLabel
 	w.messageTimer = 1.2
@@ -161,8 +213,25 @@ func (w *World) restartRun() {
 	w.finishTime = 0
 	w.finished = false
 	w.collected = 0
+	w.lap = 1
+	if w.totalLaps <= 0 {
+		w.totalLaps = raceLapCount
+	}
+	w.nextCheckpoint = 0
+	w.kartSpeed = 0
+	w.kartYaw = w.startYaw
+	if w.vehicle != nil {
+		w.vehicle.Speed = 0
+		w.vehicle.Yaw = w.startYaw
+	}
+	w.boostTimer = 0
+	w.driftCharge = 0
+	w.drifting = false
+	w.wasDrifting = false
 	w.checkpointPosition = w.startPosition
+	w.checkpointYaw = w.startYaw
 	w.checkpointLabel = "Start"
+	w.refreshNextGateLabel()
 	for _, checkpoint := range w.checkpoints {
 		if checkpoint != nil {
 			checkpoint.Reached = false
@@ -209,7 +278,7 @@ func itoa(value int) string {
 	n := value
 	for n > 0 {
 		d := n % 10
-		out = digits[d:d+1] + out
+		out = digits[d:d + 1] + out
 		n = n / 10
 	}
 	return out

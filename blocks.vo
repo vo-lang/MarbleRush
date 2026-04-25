@@ -1,244 +1,26 @@
 package main
 
-import "github.com/vo-lang/voplay"
-import "github.com/vo-lang/voplay/scene3d"
+import (
+	"github.com/vo-lang/voplay"
+	"github.com/vo-lang/voplay/scene3d"
+)
 
 func (w *World) buildLevel() {
-	w.buildGround()
-	w.buildBoundaries()
-	w.buildStartZone()
-	w.buildMidCourse()
-	w.buildGoalZone()
-	w.buildScenery()
-}
-
-func (w *World) buildGround() {
-	w.SpawnFloor(voplay.Vec3{X: 0, Y: -1.35, Z: -4.0}, voplay.Vec3{X: 32, Y: 1.7, Z: 48}, "ground")
-	w.SpawnFloor(voplay.Vec3{X: 0, Y: -1.8, Z: -26.0}, voplay.Vec3{X: 20, Y: 0.4, Z: 12}, "goal_meadow")
-}
-
-func (w *World) buildBoundaries() {
-	w.SpawnWall(voplay.Vec3{X: -15.2, Y: 1.4, Z: -4.0}, voplay.Vec3{X: 1.4, Y: 4.4, Z: 42}, "left_boundary")
-	w.SpawnWall(voplay.Vec3{X: 15.2, Y: 1.4, Z: -4.0}, voplay.Vec3{X: 1.4, Y: 4.4, Z: 42}, "right_boundary")
-	w.SpawnBarrier(voplay.Vec3{X: -1.6, Y: 1.95, Z: -28.8}, 8.4, "goal_fence")
-}
-
-func (w *World) buildStartZone() {
-	w.SpawnPlatform(voplay.Vec3{X: 0, Y: -0.55, Z: 13.0}, voplay.Vec3{X: 10.6, Y: 0.7, Z: 8.8}, "start_plaza")
-	w.SpawnStartPad(voplay.Vec3{X: 0, Y: -0.08, Z: 14.0}, "start_pad")
-	w.SpawnBridge(voplay.Vec3{X: 0, Y: -0.28, Z: 6.2}, voplay.Vec3{X: 5.4, Y: 0.34, Z: 8.6}, "bridge_entry")
-	w.SpawnRail(voplay.Vec3{X: -5.7, Y: 0.1, Z: 12.6}, voplay.Vec3{X: 0.55, Y: 1.4, Z: 8.2}, "start_left_rail")
-	w.SpawnRail(voplay.Vec3{X: 5.7, Y: 0.1, Z: 12.6}, voplay.Vec3{X: 0.55, Y: 1.4, Z: 8.2}, "start_right_rail")
-	w.SpawnMarkerPole(voplay.Vec3{X: -9.2, Y: -0.45, Z: 14.4}, 3.4, "start_pole_left")
-	w.SpawnMarkerPole(voplay.Vec3{X: 9.2, Y: -0.45, Z: 14.4}, 3.4, "start_pole_right")
-	w.addCollectibleLine(voplay.Vec3{X: 0, Y: 1.15, Z: 9.0}, voplay.Vec3{X: 0, Y: 1.18, Z: 4.8}, 3, "start_orb")
-}
-
-func (w *World) buildMidCourse() {
-	w.SpawnPillar(voplay.Vec3{X: -2.0, Y: -0.85, Z: 8.6}, 1.0, 0.55, "bridge_support_left")
-	w.SpawnPillar(voplay.Vec3{X: 2.0, Y: -0.85, Z: 4.6}, 1.0, 0.55, "bridge_support_right")
-
-	w.SpawnRamp(voplay.Vec3{X: 0, Y: 0.18, Z: -0.8}, -0.22, voplay.Vec3{X: 5.2, Y: 0.56, Z: 7.2}, "main_ramp")
-	w.SpawnPlatform(voplay.Vec3{X: 0, Y: 0.98, Z: -7.9}, voplay.Vec3{X: 8.4, Y: 0.78, Z: 6.8}, "mid_terrace")
-	w.SpawnCheckpointPad(voplay.Vec3{X: 0, Y: 1.38, Z: -6.6}, "checkpoint_pad")
-	w.addCheckpoint(voplay.Vec3{X: 0, Y: 2.25, Z: -6.6}, voplay.Vec3{X: 0, Y: 2.45, Z: -5.8}, "Terrace")
-	w.addCollectibleLine(voplay.Vec3{X: -1.15, Y: 2.08, Z: -3.6}, voplay.Vec3{X: 1.15, Y: 2.08, Z: -8.6}, 3, "ramp_arc")
-	w.SpawnRail(voplay.Vec3{X: -5.2, Y: 1.32, Z: -7.9}, voplay.Vec3{X: 0.48, Y: 1.0, Z: 5.8}, "terrace_left_rail")
-	w.SpawnRail(voplay.Vec3{X: 5.2, Y: 1.32, Z: -7.9}, voplay.Vec3{X: 0.48, Y: 1.0, Z: 5.8}, "terrace_right_rail")
-	w.SpawnMarkerPole(voplay.Vec3{X: -5.6, Y: 1.1, Z: -6.6}, 2.4, "checkpoint_pole_left")
-	w.SpawnMarkerPole(voplay.Vec3{X: 5.6, Y: 1.1, Z: -6.6}, 2.4, "checkpoint_pole_right")
-
-	w.SpawnRampTurn(voplay.Vec3{X: -1.2, Y: 1.5, Z: -13.0}, -0.13, 0.34, voplay.Vec3{X: 4.2, Y: 0.46, Z: 6.4}, "turn_ramp")
-	w.SpawnPlatform(voplay.Vec3{X: -2.4, Y: 1.68, Z: -16.2}, voplay.Vec3{X: 7.2, Y: 0.58, Z: 5.0}, "timing_deck")
-	w.addMovingObstacle(voplay.Vec3{X: -2.4, Y: 2.45, Z: -16.2}, voplay.Vec3{X: 1.0, Y: 0.9, Z: 0.72}, voplay.Vec3{X: 1}, 2.2, 1.55, 0, "timing_sweeper")
-	w.addCollectibleLine(voplay.Vec3{X: -2.4, Y: 2.42, Z: -14.6}, voplay.Vec3{X: -2.4, Y: 2.42, Z: -17.6}, 2, "timing_orb")
-
-	w.SpawnBridge(voplay.Vec3{X: -4.6, Y: 1.9, Z: -21.0}, voplay.Vec3{X: 3.4, Y: 0.32, Z: 7.0}, "safe_bridge")
-	w.SpawnRiskBridge(voplay.Vec3{X: 0.9, Y: 2.02, Z: -21.0}, voplay.Vec3{X: 1.25, Y: 0.28, Z: 7.0}, "greed_bridge")
-	w.addCollectibleLine(voplay.Vec3{X: -4.6, Y: 2.62, Z: -18.9}, voplay.Vec3{X: -4.6, Y: 2.62, Z: -22.9}, 2, "safe_bridge_orb")
-	w.addCollectibleLine(voplay.Vec3{X: 0.9, Y: 2.72, Z: -18.4}, voplay.Vec3{X: 0.9, Y: 2.72, Z: -23.3}, 4, "greed_bridge_orb")
-	w.SpawnPillar(voplay.Vec3{X: -5.8, Y: -0.05, Z: -20.2}, 3.6, 0.58, "safe_support_left")
-	w.SpawnPillar(voplay.Vec3{X: 0.9, Y: -0.05, Z: -20.8}, 3.8, 0.5, "greed_support")
-}
-
-func (w *World) buildGoalZone() {
-	w.SpawnPlatform(voplay.Vec3{X: -1.6, Y: 2.08, Z: -24.2}, voplay.Vec3{X: 9.4, Y: 0.88, Z: 8.8}, "goal_deck")
-	w.SpawnGoalArch(voplay.Vec3{X: -1.6, Y: 3.1, Z: -27.2}, "goal_arch")
-	w.SpawnRail(voplay.Vec3{X: -6.9, Y: 2.36, Z: -24.2}, voplay.Vec3{X: 0.52, Y: 1.1, Z: 7.3}, "goal_left_rail")
-	w.SpawnRail(voplay.Vec3{X: 3.7, Y: 2.36, Z: -24.2}, voplay.Vec3{X: 0.52, Y: 1.1, Z: 7.3}, "goal_right_rail")
-	w.SpawnCheckpointPad(voplay.Vec3{X: -1.6, Y: 2.5, Z: -22.4}, "goal_pad")
-	w.addCheckpoint(voplay.Vec3{X: -1.6, Y: 3.3, Z: -22.4}, voplay.Vec3{X: -1.6, Y: 3.05, Z: -22.0}, "Final")
-	w.addCollectibleLine(voplay.Vec3{X: -3.2, Y: 3.25, Z: -23.5}, voplay.Vec3{X: 0.0, Y: 3.25, Z: -25.7}, 3, "goal_lane_orb")
-	w.setGoal(voplay.Vec3{X: -1.6, Y: 3.15, Z: -27.2})
-}
-
-func (w *World) buildScenery() {
-	w.SpawnTree(voplay.Vec3{X: -10.8, Y: -0.45, Z: 8.8}, 1.1, "tree_left_start")
-	w.SpawnTree(voplay.Vec3{X: 10.2, Y: -0.45, Z: 4.6}, 1.2, "tree_right_start")
-	w.SpawnTree(voplay.Vec3{X: -11.4, Y: -0.45, Z: -5.8}, 1.0, "tree_left_mid")
-	w.SpawnTree(voplay.Vec3{X: 10.8, Y: -0.45, Z: -16.0}, 1.15, "tree_right_goal")
-
-	w.SpawnBush(voplay.Vec3{X: -7.6, Y: -0.45, Z: 10.2}, 1.0, "bush_left_start")
-	w.SpawnBush(voplay.Vec3{X: 7.2, Y: -0.45, Z: -1.6}, 0.95, "bush_right_mid")
-	w.SpawnBush(voplay.Vec3{X: -8.1, Y: -0.45, Z: -20.4}, 1.1, "bush_left_goal")
-	w.SpawnBush(voplay.Vec3{X: 8.2, Y: -0.45, Z: -25.0}, 0.9, "bush_right_goal")
-
-	w.SpawnCloudMarker(voplay.Vec3{X: -8.8, Y: 7.6, Z: -10.4}, 1.2, "cloud_left")
-	w.SpawnCloudMarker(voplay.Vec3{X: 8.9, Y: 8.2, Z: -17.4}, 1.35, "cloud_right")
-}
-
-func (w *World) SpawnStartPad(position voplay.Vec3, tag string) {
-	w.spawnStaticBox(position, voplay.QuatIdentity(), voplay.Vec3{X: 3.4, Y: 0.32, Z: 3.4}, w.theme.AccentColor, tag+"_base")
-	w.spawnStaticBox(position.Add(voplay.Vec3{Y: 0.2}), voplay.QuatIdentity(), voplay.Vec3{X: 2.4, Y: 0.14, Z: 2.4}, w.theme.GoalColor, tag+"_top")
-}
-
-func (w *World) SpawnFloor(position, scale voplay.Vec3, tag string) {
-	w.spawnStaticBox(position, voplay.QuatIdentity(), scale, w.theme.GroundColor, tag)
-}
-
-func (w *World) SpawnPlatform(position, scale voplay.Vec3, tag string) {
-	w.spawnStaticBox(position, voplay.QuatIdentity(), scale, w.theme.PathColor, tag)
-	w.spawnStaticBox(position.Add(voplay.Vec3{Y: -scale.Y*0.32}), voplay.QuatIdentity(), voplay.Vec3{X: scale.X * 0.92, Y: scale.Y * 0.38, Z: scale.Z * 0.88}, w.theme.SupportColor, tag+"_underside")
-}
-
-func (w *World) SpawnBridge(position, scale voplay.Vec3, tag string) {
-	w.spawnStaticBox(position, voplay.QuatIdentity(), scale, w.theme.BridgeColor, tag+"_deck")
-	w.spawnStaticBox(position.Add(voplay.Vec3{X: -(scale.X*0.5 - 0.22), Y: 0.24}), voplay.QuatIdentity(), voplay.Vec3{X: 0.34, Y: 0.36, Z: scale.Z * 0.96}, w.theme.RailColor, tag+"_left_curb")
-	w.spawnStaticBox(position.Add(voplay.Vec3{X: scale.X*0.5 - 0.22, Y: 0.24}), voplay.QuatIdentity(), voplay.Vec3{X: 0.34, Y: 0.36, Z: scale.Z * 0.96}, w.theme.RailColor, tag+"_right_curb")
-}
-
-func (w *World) SpawnRiskBridge(position, scale voplay.Vec3, tag string) {
-	w.spawnStaticBox(position, voplay.QuatIdentity(), scale, w.theme.RampColor, tag+"_deck")
-	w.spawnStaticBox(position.Add(voplay.Vec3{Y: -scale.Y * 0.42}), voplay.QuatIdentity(), voplay.Vec3{X: scale.X * 0.75, Y: scale.Y * 0.24, Z: scale.Z * 0.9}, w.theme.SupportColor, tag+"_underside")
-}
-
-func (w *World) SpawnStep(position, scale voplay.Vec3, tag string) {
-	w.spawnStaticBox(position, voplay.QuatIdentity(), scale, w.theme.AccentColor, tag)
-}
-
-func (w *World) SpawnWall(position, scale voplay.Vec3, tag string) {
-	w.spawnStaticBox(position, voplay.QuatIdentity(), scale, w.theme.WallColor, tag)
-}
-
-func (w *World) SpawnRail(position, scale voplay.Vec3, tag string) {
-	w.spawnStaticBox(position, voplay.QuatIdentity(), scale, w.theme.RailColor, tag)
-}
-
-func (w *World) SpawnBarrier(position voplay.Vec3, width float64, tag string) {
-	postOffset := width*0.5 - 0.25
-	w.spawnStaticBox(position.Add(voplay.Vec3{X: -postOffset, Y: 0.8}), voplay.QuatIdentity(), voplay.Vec3{X: 0.34, Y: 1.6, Z: 0.34}, w.theme.BarrierColor, tag+"_left_post")
-	w.spawnStaticBox(position.Add(voplay.Vec3{X: postOffset, Y: 0.8}), voplay.QuatIdentity(), voplay.Vec3{X: 0.34, Y: 1.6, Z: 0.34}, w.theme.BarrierColor, tag+"_right_post")
-	w.spawnStaticBox(position.Add(voplay.Vec3{Y: 1.15}), voplay.QuatIdentity(), voplay.Vec3{X: width, Y: 0.28, Z: 0.32}, w.theme.GoalColor, tag+"_beam")
-}
-
-func (w *World) SpawnRamp(position voplay.Vec3, pitch float64, scale voplay.Vec3, tag string) {
-	rotation := voplay.QuatFromAxisAngle(voplay.Vec3{X: 1}, pitch)
-	w.spawnStaticBox(position, rotation, scale, w.theme.RampColor, tag)
-}
-
-func (w *World) SpawnRampTurn(position voplay.Vec3, pitch, yaw float64, scale voplay.Vec3, tag string) {
-	rotation := voplay.QuatFromEuler(pitch, yaw, 0)
-	w.spawnStaticBox(position, rotation, scale, w.theme.RampColor, tag)
-}
-
-func (w *World) SpawnCheckpointPad(position voplay.Vec3, tag string) {
-	w.spawnStaticBox(position, voplay.QuatIdentity(), voplay.Vec3{X: 3.0, Y: 0.18, Z: 3.0}, w.theme.CheckpointColor, tag+"_base")
-	w.spawnStaticBox(position.Add(voplay.Vec3{Y: 0.16}), voplay.QuatIdentity(), voplay.Vec3{X: 1.9, Y: 0.08, Z: 1.9}, w.theme.PathColor, tag+"_top")
-	w.spawnVisualCylinder(position.Add(voplay.Vec3{Y: 0.8}), voplay.QuatIdentity(), voplay.Vec3{X: 0.18, Y: 1.1, Z: 0.18}, w.theme.BannerColor, tag+"_flag_pole")
-	w.spawnDecoSphere(position.Add(voplay.Vec3{Y: 1.56}), voplay.Vec3{X: 0.34, Y: 0.34, Z: 0.34}, w.theme.CheckpointColor, tag+"_beacon")
-}
-
-func (w *World) SpawnGoalArch(position voplay.Vec3, tag string) {
-	leftPillar := position.Add(voplay.Vec3{X: -2.4, Y: -0.5})
-	rightPillar := position.Add(voplay.Vec3{X: 2.4, Y: -0.5})
-	w.spawnVisualCylinder(leftPillar, voplay.QuatIdentity(), voplay.Vec3{X: 0.8, Y: 4.0, Z: 0.8}, w.theme.GoalColor, tag+"_left_pillar")
-	w.spawnVisualCylinder(rightPillar, voplay.QuatIdentity(), voplay.Vec3{X: 0.8, Y: 4.0, Z: 0.8}, w.theme.GoalColor, tag+"_right_pillar")
-	w.spawnStaticBox(position.Add(voplay.Vec3{Y: 1.42}), voplay.QuatIdentity(), voplay.Vec3{X: 6.0, Y: 0.72, Z: 1.18}, w.theme.GoalTrimColor, tag+"_beam")
-	w.spawnDecoSphere(position.Add(voplay.Vec3{Y: 2.4}), voplay.Vec3{X: 0.86, Y: 0.86, Z: 0.86}, w.theme.GoalColor, tag+"_topper")
-}
-
-func (w *World) SpawnBanner(position voplay.Vec3, width, height float64, tag string) {
-	postOffset := width*0.5 - 0.28
-	w.spawnVisualCylinder(position.Add(voplay.Vec3{X: -postOffset, Y: -height * 0.5}), voplay.QuatIdentity(), voplay.Vec3{X: 0.22, Y: height, Z: 0.22}, w.theme.BarrierColor, tag+"_left_post")
-	w.spawnVisualCylinder(position.Add(voplay.Vec3{X: postOffset, Y: -height * 0.5}), voplay.QuatIdentity(), voplay.Vec3{X: 0.22, Y: height, Z: 0.22}, w.theme.BarrierColor, tag+"_right_post")
-	w.spawnVisualBox(position.Add(voplay.Vec3{Y: -height * 0.28}), voplay.QuatIdentity(), voplay.Vec3{X: width * 0.86, Y: height * 0.54, Z: 0.14}, w.theme.BannerColor, tag+"_cloth")
-	w.spawnVisualBox(position.Add(voplay.Vec3{Y: -height * 0.02}), voplay.QuatIdentity(), voplay.Vec3{X: width, Y: 0.18, Z: 0.16}, w.theme.GoalTrimColor, tag+"_trim")
-}
-
-func (w *World) SpawnMarkerPole(position voplay.Vec3, height float64, tag string) {
-	w.spawnVisualCylinder(position.Add(voplay.Vec3{Y: height * 0.5}), voplay.QuatIdentity(), voplay.Vec3{X: 0.4, Y: height, Z: 0.4}, w.theme.GoalColor, tag+"_pole")
-	w.spawnDecoSphere(position.Add(voplay.Vec3{Y: height + 0.55}), voplay.Vec3{X: 0.55, Y: 0.55, Z: 0.55}, w.theme.GoalColor, tag+"_cap")
-}
-
-func (w *World) SpawnPillar(position voplay.Vec3, height, radius float64, tag string) {
-	w.spawnVisualCylinder(position.Add(voplay.Vec3{Y: height * 0.5}), voplay.QuatIdentity(), voplay.Vec3{X: radius, Y: height, Z: radius}, w.theme.SupportColor, tag)
-}
-
-func (w *World) SpawnTree(position voplay.Vec3, scale float64, tag string) {
-	trunkHeight := 1.8 * scale
-	w.spawnVisualCylinder(position.Add(voplay.Vec3{Y: trunkHeight * 0.5}), voplay.QuatIdentity(), voplay.Vec3{X: 0.65 * scale, Y: trunkHeight, Z: 0.65 * scale}, w.theme.TreeTrunkColor, tag+"_trunk")
-	w.spawnDecoSphere(position.Add(voplay.Vec3{Y: trunkHeight + 0.8*scale}), voplay.Vec3{X: 1.8 * scale, Y: 1.5 * scale, Z: 1.8 * scale}, w.theme.TreeLeafColor, tag+"_leaf")
-}
-
-func (w *World) SpawnBush(position voplay.Vec3, scale float64, tag string) {
-	w.spawnDecoSphere(position, voplay.Vec3{X: 1.25 * scale, Y: 0.82 * scale, Z: 0.95 * scale}, w.theme.BushColor, tag+"_core")
-	w.spawnDecoSphere(position.Add(voplay.Vec3{X: -0.78 * scale, Y: 0.1 * scale, Z: 0.22 * scale}), voplay.Vec3{X: 0.82 * scale, Y: 0.64 * scale, Z: 0.7 * scale}, w.theme.TreeLeafColor, tag+"_left")
-	w.spawnDecoSphere(position.Add(voplay.Vec3{X: 0.74 * scale, Y: 0.08 * scale, Z: -0.16 * scale}), voplay.Vec3{X: 0.78 * scale, Y: 0.62 * scale, Z: 0.68 * scale}, w.theme.TreeLeafColor, tag+"_right")
-}
-
-func (w *World) SpawnCloudMarker(position voplay.Vec3, scale float64, tag string) {
-	w.spawnDecoSphere(position.Add(voplay.Vec3{Y: -0.08 * scale}), voplay.Vec3{X: 1.26 * scale, Y: 0.92 * scale, Z: 0.92 * scale}, w.theme.CloudShadowColor, tag+"_shadow")
-	w.spawnDecoSphere(position, voplay.Vec3{X: 1.2 * scale, Y: 0.9 * scale, Z: 0.9 * scale}, w.theme.CloudColor, tag+"_core")
-	w.spawnDecoSphere(position.Add(voplay.Vec3{X: -0.95 * scale, Y: -0.15 * scale}), voplay.Vec3{X: 0.8 * scale, Y: 0.65 * scale, Z: 0.65 * scale}, w.theme.CloudColor, tag+"_left")
-	w.spawnDecoSphere(position.Add(voplay.Vec3{X: 0.95 * scale, Y: -0.05 * scale}), voplay.Vec3{X: 0.75 * scale, Y: 0.6 * scale, Z: 0.6 * scale}, w.theme.CloudColor, tag+"_right")
-}
-
-func (w *World) SpawnFloatingOrb(position voplay.Vec3, scale float64, tag string) {
-	w.spawnDecoSphere(position, voplay.Vec3{X: scale, Y: scale, Z: scale}, w.theme.OrbColor, tag+"_core")
-	w.spawnDecoSphere(position.Add(voplay.Vec3{Y: -0.16 * scale, Z: 0.12 * scale}), voplay.Vec3{X: 0.58 * scale, Y: 0.58 * scale, Z: 0.58 * scale}, w.theme.GoalTrimColor, tag+"_glow")
+	w.loadDemoMap()
 }
 
 func (w *World) spawnStaticBox(position voplay.Vec3, rotation voplay.Quat, scale voplay.Vec3, tint voplay.Color, tag string) *scene3d.Entity {
-	return w.scene.Spawn(scene3d.EntityDesc{
-		Position: position,
-		Rotation: rotation,
-		Scale:    scale,
-		Model:    w.cubeModel,
-		Tint:     tint,
-		TintSet:  true,
-		Tag:      tag,
-		Physics:  boxPhysics(scale),
-	})
-}
-
-func (w *World) spawnStaticCylinder(position voplay.Vec3, rotation voplay.Quat, scale voplay.Vec3, tint voplay.Color, tag string) *scene3d.Entity {
-	return w.spawnStaticModel(w.cylinderModel, position, rotation, scale, tint, tag)
+	return w.scene.Spawn(scene3d.EntityDesc{Position: position, Rotation: rotation, Scale: scale, Model: w.cubeModel, Tint: tint, TintSet: true, Tag: tag, Physics: boxPhysics(scale)})
 }
 
 func (w *World) spawnStaticModel(model voplay.ModelID, position voplay.Vec3, rotation voplay.Quat, scale voplay.Vec3, tint voplay.Color, tag string) *scene3d.Entity {
 	physics := scene3d.TrimeshPhysics(model)
 	physics.Friction = 0.9
-	return w.scene.Spawn(scene3d.EntityDesc{
-		Position: position,
-		Rotation: rotation,
-		Scale:    scale,
-		Model:    model,
-		Tint:     tint,
-		TintSet:  true,
-		Tag:      tag,
-		Physics:  physics,
-	})
+	return w.scene.Spawn(scene3d.EntityDesc{Position: position, Rotation: rotation, Scale: scale, Model: model, Tint: tint, TintSet: true, Tag: tag, Physics: physics})
 }
 
 func boxPhysics(scale voplay.Vec3) *scene3d.Physics {
-	return &scene3d.Physics{
-		Type:        scene3d.Static,
-		Collider:    scene3d.Box(scale.X*0.5, scale.Y*0.5, scale.Z*0.5),
-		Layer:       voplay.CollisionLayerDefault,
-		Mask:        voplay.CollisionMaskAll,
-		Friction:    0.9,
-		Restitution: 0.0,
-	}
+	return &scene3d.Physics{Type: scene3d.Static, Collider: scene3d.Box(scale.X * 0.5, scale.Y * 0.5, scale.Z * 0.5), Layer: voplay.CollisionLayerDefault, Mask: voplay.CollisionMaskAll, Friction: 0.72, Restitution: 0.02}
 }
 
 func (w *World) spawnVisualBox(position voplay.Vec3, rotation voplay.Quat, scale voplay.Vec3, tint voplay.Color, tag string) *scene3d.Entity {
@@ -250,27 +32,9 @@ func (w *World) spawnVisualCylinder(position voplay.Vec3, rotation voplay.Quat, 
 }
 
 func (w *World) spawnVisualModel(model voplay.ModelID, position voplay.Vec3, rotation voplay.Quat, scale voplay.Vec3, tint voplay.Color, tag string) *scene3d.Entity {
-	return w.scene.Spawn(scene3d.EntityDesc{
-		Position: position,
-		Rotation: rotation,
-		Scale:    scale,
-		Model:    model,
-		Tint:     tint,
-		TintSet:  true,
-		Tag:      tag,
-		PickMode: scene3d.PickDisabled,
-	})
+	return w.scene.Spawn(scene3d.EntityDesc{Position: position, Rotation: rotation, Scale: scale, Model: model, Tint: tint, TintSet: true, Tag: tag})
 }
 
 func (w *World) spawnDecoSphere(position, scale voplay.Vec3, tint voplay.Color, tag string) *scene3d.Entity {
-	return w.scene.Spawn(scene3d.EntityDesc{
-		Position: position,
-		Rotation: voplay.QuatIdentity(),
-		Scale:    scale,
-		Model:    w.sphereModel,
-		Tint:     tint,
-		TintSet:  true,
-		Tag:      tag,
-		PickMode: scene3d.PickDisabled,
-	})
+	return w.spawnVisualModel(w.sphereModel, position, voplay.QuatIdentity(), scale, tint, tag)
 }
