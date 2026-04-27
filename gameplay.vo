@@ -14,6 +14,8 @@ const (
 type Collectible struct {
 	Core *scene3d.Entity
 	Glow *scene3d.Entity
+	CorePrimitive *PrimitivePart
+	GlowPrimitive *PrimitivePart
 	Position voplay.Vec3
 	Collected bool
 }
@@ -34,6 +36,7 @@ type BoostPad struct {
 
 type MovingObstacle struct {
 	Entity *scene3d.Entity
+	Visual *PrimitivePart
 	Origin voplay.Vec3
 	Axis voplay.Vec3
 	Amplitude float64
@@ -42,9 +45,10 @@ type MovingObstacle struct {
 }
 
 func (w *World) addCollectible(position voplay.Vec3, tag string) {
-	core := w.spawnVisualBox(position, voplay.QuatFromAxisAngle(voplay.Vec3{Y: 1}, 0.78), voplay.Vec3{X: 1.15, Y: 1.15, Z: 1.15}, w.theme.OrbColor, tag + "_box")
-	glow := w.spawnDecoSphere(position.Add(voplay.Vec3{Y: -0.12}), voplay.Vec3{X: 1.55, Y: 0.3, Z: 1.55}, w.theme.GoalTrimColor, tag + "_glow")
-	w.collectibles = append(w.collectibles, &Collectible{Core: core, Glow: glow, Position: position})
+	primitive := w.ensurePrimitiveScene()
+	core := primitive.AddDynamic(primitive.RoundedBox, primitive.OrbMat, position, voplay.QuatFromAxisAngle(voplay.Vec3{Y: 1}, 0.78), voplay.Vec3{X: 1.15, Y: 1.15, Z: 1.15}, w.theme.OrbColor)
+	glow := primitive.AddDynamic(primitive.Sphere, primitive.GlowMat, position.Add(voplay.Vec3{Y: -0.12}), voplay.QuatIdentity(), voplay.Vec3{X: 1.55, Y: 0.3, Z: 1.55}, w.theme.GoalTrimColor)
+	w.collectibles = append(w.collectibles, &Collectible{CorePrimitive: core, GlowPrimitive: glow, Position: position})
 }
 
 func (w *World) addCollectibleLine(start, end voplay.Vec3, count int, tag string) {
@@ -67,8 +71,11 @@ func (w *World) addBoostPad(position voplay.Vec3, radius float64) {
 }
 
 func (w *World) addMovingObstacle(position, scale, axis voplay.Vec3, amplitude, speed, phase float64, tag string) {
-	entity := w.spawnStaticBox(position, voplay.QuatIdentity(), scale, w.theme.HazardColor, tag)
-	w.obstacles = append(w.obstacles, &MovingObstacle{Entity: entity, Origin: position, Axis: axis.Normalize(), Amplitude: amplitude, Speed: speed, Phase: phase})
+	entity := w.scene.Spawn(scene3d.EntityDesc{Position: position, Rotation: voplay.QuatIdentity(), Scale: voplay.Vec3{X: 1, Y: 1, Z: 1}, Tag: tag + "_physics", Physics: boxPhysics(scale), PickMode: scene3d.PickDisabled})
+	entity.Visible = false
+	primitive := w.ensurePrimitiveScene()
+	visual := primitive.AddDynamic(primitive.RoundedBox, primitive.HazardMat, position, voplay.QuatIdentity(), scale, w.theme.HazardColor)
+	w.obstacles = append(w.obstacles, &MovingObstacle{Entity: entity, Visual: visual, Origin: position, Axis: axis.Normalize(), Amplitude: amplitude, Speed: speed, Phase: phase})
 }
 
 func (w *World) updateGameplay(dt float64) {
@@ -89,7 +96,11 @@ func (w *World) updateMovingObstacles() {
 			continue
 		}
 		offset := math.Sin(w.courseTime * obstacle.Speed + obstacle.Phase) * obstacle.Amplitude
-		obstacle.Entity.SetPosition(obstacle.Origin.Add(obstacle.Axis.Scale(offset)))
+		position := obstacle.Origin.Add(obstacle.Axis.Scale(offset))
+		obstacle.Entity.SetPosition(position)
+		if obstacle.Visual != nil {
+			obstacle.Visual.SetPose(position, voplay.QuatIdentity())
+		}
 	}
 }
 
@@ -112,6 +123,8 @@ func (w *World) updateCollectibles() {
 		w.messageTimer = 1.1
 		hideEntity(item.Core)
 		hideEntity(item.Glow)
+		hidePrimitivePart(item.CorePrimitive)
+		hidePrimitivePart(item.GlowPrimitive)
 	}
 }
 
@@ -203,7 +216,7 @@ func (w *World) refreshNextGateLabel() {
 
 func (w *World) respawnAtCheckpoint() {
 	w.setKartPose(w.checkpointPosition, w.checkpointYaw)
-	w.camera.UpdateCamera(&w.scene.Camera, w.scene, 0)
+	w.updateRacingCamera(0)
 	w.message = "Back to " + w.checkpointLabel
 	w.messageTimer = 1.2
 }
@@ -244,6 +257,8 @@ func (w *World) restartRun() {
 		item.Collected = false
 		showEntity(item.Core)
 		showEntity(item.Glow)
+		showPrimitivePart(item.CorePrimitive)
+		showPrimitivePart(item.GlowPrimitive)
 	}
 	w.respawnAtCheckpoint()
 	w.message = "Go!"

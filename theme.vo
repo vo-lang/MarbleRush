@@ -45,15 +45,26 @@ type WorldTheme struct {
 }
 
 func defaultWorldTheme() WorldTheme {
-	return WorldTheme{SkyColor: voplay.Hex(0x79d4f2), FogColor: voplay.Hex(0xb2dce6), AmbientColor: voplay.Hex(0x64777f), GroundColor: voplay.Hex(0x67c96d), PathColor: voplay.Hex(0x647d8f), BridgeColor: voplay.Hex(0xf6bf73), WallColor: voplay.Hex(0x60789d), RailColor: voplay.Hex(0xfff8df), RampColor: voplay.Hex(0xffbf68), AccentColor: voplay.Hex(0xffd44b), BarrierColor: voplay.Hex(0x33486f), HazardColor: voplay.Hex(0xf23b58), CheckpointColor: voplay.Hex(0x39d8c5), BannerColor: voplay.Hex(0xf55367), SupportColor: voplay.Hex(0x7c95b6), GoalColor: voplay.Hex(0xff5b67), GoalTrimColor: voplay.Hex(0xffdf59), PlayerColor: voplay.Hex(0x3c7dff), KartTrimColor: voplay.Hex(0xfff27a), DriverColor: voplay.Hex(0xff6f7e), WheelColor: voplay.Hex(0x1f2b3d), BoostColor: voplay.Hex(0x38d8ff), TrackMarkColor: voplay.Hex(0xffffff), TreeTrunkColor: voplay.Hex(0x8d643b), TreeLeafColor: voplay.Hex(0x35b96b), BushColor: voplay.Hex(0x2fc35c), CloudColor: voplay.Hex(0xffffff), CloudShadowColor: voplay.Hex(0xd7eef8), OrbColor: voplay.Hex(0xff8ed1), HudPanelColor: voplay.Hex(0x10233d), HudShadowColor: voplay.Hex(0x08111e), HudTrimColor: voplay.Hex(0x3b7eff), HudTextColor: voplay.Hex(0xffffff), HudSubtextColor: voplay.Hex(0xd9efff), HudAccentTextColor: voplay.Hex(0xfff2b0)}
+	return WorldTheme{SkyColor: voplay.Hex(0x68d9ff), FogColor: voplay.Hex(0xbdeeff), AmbientColor: voplay.Hex(0x7aa8c8), GroundColor: voplay.Hex(0x72d941), PathColor: voplay.Hex(0x5f707e), BridgeColor: voplay.Hex(0xf7c76b), WallColor: voplay.Hex(0x7d93b6), RailColor: voplay.Hex(0xffffff), RampColor: voplay.Hex(0xffb72e), AccentColor: voplay.Hex(0xffe032), BarrierColor: voplay.Hex(0x304d82), HazardColor: voplay.Hex(0xff3154), CheckpointColor: voplay.Hex(0x25e8d0), BannerColor: voplay.Hex(0xff405a), SupportColor: voplay.Hex(0xa7b7d0), GoalColor: voplay.Hex(0xff4056), GoalTrimColor: voplay.Hex(0xffe032), PlayerColor: voplay.Hex(0x008cff), KartTrimColor: voplay.Hex(0xfff46b), DriverColor: voplay.Hex(0xff3d48), WheelColor: voplay.Hex(0x202838), BoostColor: voplay.Hex(0x21dfff), TrackMarkColor: voplay.Hex(0xffffff), TreeTrunkColor: voplay.Hex(0xaa6a2e), TreeLeafColor: voplay.Hex(0x26cf51), BushColor: voplay.Hex(0x30d64f), CloudColor: voplay.Hex(0xffffff), CloudShadowColor: voplay.Hex(0xe8f6ff), OrbColor: voplay.Hex(0xff7fc9), HudPanelColor: voplay.Hex(0x10233d), HudShadowColor: voplay.Hex(0x08111e), HudTrimColor: voplay.Hex(0x3b7eff), HudTextColor: voplay.Hex(0xffffff), HudSubtextColor: voplay.Hex(0xd9efff), HudAccentTextColor: voplay.Hex(0xfff2b0)}
 }
 
 func applyWorldTheme(theme WorldTheme, scene *scene3d.Scene) {
 	scene.Camera.Fov = 64
-	scene.Ambient = theme.AmbientColor
-	scene.Fog = scene3d.FogConfig{Mode: scene3d.FogLinear, Color: theme.FogColor, Start: 175, End: 390}
-	scene.AddLight(scene3d.Light{Type: scene3d.DirectionalLight, Direction: voplay.Vec3{X: -0.38, Y: 0.54, Z: -0.75}.Normalize(), Color: voplay.Hex(0xfff0ce), Intensity: 0.9})
-	scene.AddLight(scene3d.Light{Type: scene3d.DirectionalLight, Direction: voplay.Vec3{X: -0.55, Y: 0.35, Z: -0.28}.Normalize(), Color: voplay.Hex(0x86bfd4), Intensity: 0.08})
+	profile := scene3d.KartRacingLightingProfile()
+	profile.Ambient = voplay.Color{R: 0.56, G: 0.66, B: 0.74, A: 1}
+	profile.AmbientGround = voplay.Color{R: 0.26, G: 0.34, B: 0.24, A: 1}
+	profile.Lights = []scene3d.Light{
+		{Type: scene3d.DirectionalLight, Direction: voplay.Vec3{X: -0.48, Y: 0.72, Z: -0.50}.Normalize(), Color: voplay.Hex(0xfff0b8), Intensity: 1.88},
+		{Type: scene3d.DirectionalLight, Direction: voplay.Vec3{X: 0.58, Y: 0.32, Z: 0.34}.Normalize(), Color: voplay.Hex(0xa8dcff), Intensity: 0.32},
+	}
+	profile.Fog.Color = theme.FogColor
+	profile.Fog.Start = 230
+	profile.Fog.End = 520
+	profile.ColorGrading = scene3d.ColorGradingConfig{ToneMap: scene3d.ToneMapACES, Exposure: 1.32, Contrast: 1.10, Saturation: 1.32}
+	profile.ShadowsEnabled = true
+	profile.ShadowResolution = 1024
+	profile.ShadowStrength = 0.44
+	scene.ApplyLightingProfile(profile)
 }
 
 type WorldHUDState struct {
@@ -73,14 +84,24 @@ type WorldHUDState struct {
 	MessageTimer float64
 	Finished bool
 	DebugOverlayVisible bool
+	RenderDebugMode int
+	HeroCameraVisible bool
+	SceneActive int
+	SceneVisible int
+	SceneModels int
+	SceneUpserts int
+	TrackEntities int
+	PrimitiveInstances int
+	PrimitiveChunks int
+	PrimitiveGroups int
 }
 
 func drawWorldHUD(theme WorldTheme, g *voplay.GameCtx, hud WorldHUDState) {
 	drawHudPanel(g.Draw, theme, 24, 22, 430, 112, 0.88)
 	g.Draw.DrawRect(24, 22, 430, 10, theme.HudTrimColor)
 	g.Draw.DrawText("MarbleRush", 42, 58, 30, theme.HudTextColor)
-	g.Draw.DrawText("Terrain + Track Mesh", 42, 86, 20, theme.HudAccentTextColor)
-	g.Draw.DrawText("Map asset demo", 42, 112, 18, theme.HudSubtextColor)
+	g.Draw.DrawText("Primitive Track", 42, 86, 20, theme.HudAccentTextColor)
+	g.Draw.DrawText("Retained primitive render path", 42, 112, 18, theme.HudSubtextColor)
 	courseX := float64(g.Width - 330 - 24)
 	if courseX < 24 {
 		courseX = 24
@@ -89,11 +110,11 @@ func drawWorldHUD(theme WorldTheme, g *voplay.GameCtx, hud WorldHUDState) {
 	g.Draw.DrawRect(courseX, 22, 330, 8, theme.GoalTrimColor)
 	g.Draw.DrawText("Time " + formatTime(hud.Time), courseX + 18, 54, 24, theme.HudTextColor)
 	g.Draw.DrawText("Speed " + itoa(int(hud.Speed + 0.5)), courseX + 18, 82, 20, theme.HudAccentTextColor)
-	g.Draw.DrawText("Loaded demo_track/map.json", courseX + 18, 108, 18, theme.HudSubtextColor)
+	g.Draw.DrawText("Generated primitive scene", courseX + 18, 108, 18, theme.HudSubtextColor)
 	bottomPanelY := float64(g.Height - 48)
 	bottomTextY := float64(g.Height - 26)
-	drawHudPanel(g.Draw, theme, 24, bottomPanelY, 650, 28, 0.72)
-	g.Draw.DrawText("W gas   S brake/reverse   A/D steer   Space drift   R restart", 38, bottomTextY, 16, theme.HudSubtextColor)
+	drawHudPanel(g.Draw, theme, 24, bottomPanelY, 820, 28, 0.72)
+	g.Draw.DrawText("W gas   S brake/reverse   A/D steer   Space drift   R restart   F3 stats   F4 material view   F5 inspect", 38, bottomTextY, 16, theme.HudSubtextColor)
 	if hud.Boosting {
 		boostX := float64(g.Width - 180)
 		drawHudPanel(g.Draw, theme, boostX, 134, 140, 36, 0.82)
@@ -128,6 +149,31 @@ func drawWorldHUD(theme WorldTheme, g *voplay.GameCtx, hud WorldHUDState) {
 		drawHudPanel(g.Draw, theme, debugX, float64(g.Height - 48), 160, 28, 0.78)
 		g.Draw.DrawRect(debugX, float64(g.Height - 48), 160, 5, theme.AccentColor)
 		g.Draw.DrawText("F3 debug", debugX + 14, float64(g.Height - 26), 16, theme.HudTextColor)
+		drawHudPanel(g.Draw, theme, 24, 146, 390, 102, 0.78)
+		g.Draw.DrawRect(24, 146, 330, 5, theme.AccentColor)
+		g.Draw.DrawText("Scene A/V/M " + itoa(hud.SceneActive) + "/" + itoa(hud.SceneVisible) + "/" + itoa(hud.SceneModels), 38, 172, 16, theme.HudTextColor)
+		g.Draw.DrawText("Upserts " + itoa(hud.SceneUpserts) + "  Track ents " + itoa(hud.TrackEntities), 38, 196, 16, theme.HudSubtextColor)
+		g.Draw.DrawText("Primitive I/C/G " + itoa(hud.PrimitiveInstances) + "/" + itoa(hud.PrimitiveChunks) + "/" + itoa(hud.PrimitiveGroups), 38, 220, 16, theme.HudSubtextColor)
+	}
+	if hud.RenderDebugMode != scene3d.RenderDebugLit {
+		viewW := 240.0
+		viewX := (float64(g.Width) - viewW) * 0.5
+		if viewX < 24 {
+			viewX = 24
+		}
+		drawHudPanel(g.Draw, theme, viewX, 22, viewW, 42, 0.84)
+		g.Draw.DrawRect(viewX, 22, viewW, 6, theme.AccentColor)
+		g.Draw.DrawText("View " + renderDebugLabel(hud.RenderDebugMode), viewX + 18, 52, 20, theme.HudTextColor)
+	}
+	if hud.HeroCameraVisible {
+		viewW := 260.0
+		viewX := (float64(g.Width) - viewW) * 0.5
+		if viewX < 24 {
+			viewX = 24
+		}
+		drawHudPanel(g.Draw, theme, viewX, 70, viewW, 36, 0.82)
+		g.Draw.DrawRect(viewX, 70, viewW, 5, theme.GoalTrimColor)
+		g.Draw.DrawText("Hero inspect camera", viewX + 18, 96, 18, theme.HudTextColor)
 	}
 	if hud.MessageTimer > 0 && !hud.Finished {
 		msgW := 340.0
@@ -157,4 +203,29 @@ func drawHudPanel(d *voplay.DrawCtx, theme WorldTheme, x, y, width, height float
 
 func formatTime(seconds float64) string {
 	return fmt.Sprintf("%.1fs", seconds)
+}
+
+func renderDebugLabel(mode int) string {
+	if mode == scene3d.RenderDebugAlbedo {
+		return "Albedo"
+	}
+	if mode == scene3d.RenderDebugNormal {
+		return "Normal"
+	}
+	if mode == scene3d.RenderDebugRoughness {
+		return "Roughness"
+	}
+	if mode == scene3d.RenderDebugMetallic {
+		return "Metallic"
+	}
+	if mode == scene3d.RenderDebugShadow {
+		return "Shadow"
+	}
+	if mode == scene3d.RenderDebugDirect {
+		return "Direct"
+	}
+	if mode == scene3d.RenderDebugAmbient {
+		return "Ambient"
+	}
+	return "Lit"
 }

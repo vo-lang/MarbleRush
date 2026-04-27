@@ -8,17 +8,28 @@ const outDir = join(root, 'assets', 'models', 'kart');
 mkdirSync(outDir, { recursive: true });
 
 const materials = {
-  blue: [0.05, 0.36, 0.95, 1],
-  lightBlue: [0.12, 0.64, 1.0, 1],
-  yellow: [1.0, 0.78, 0.12, 1],
-  red: [0.95, 0.12, 0.14, 1],
-  dark: [0.045, 0.05, 0.065, 1],
-  tire: [0.015, 0.016, 0.018, 1],
-  rubber: [0.075, 0.08, 0.085, 1],
-  metal: [0.58, 0.64, 0.68, 1],
-  glass: [0.08, 0.2, 0.32, 1],
-  skin: [1.0, 0.76, 0.54, 1],
+  toyBlue: material('glossy toy blue plastic', [0.015, 0.34, 1.0, 1], { roughness: 0.32 }),
+  toyLightBlue: material('glossy sky blue plastic', [0.08, 0.68, 1.0, 1], { roughness: 0.30 }),
+  toyOrange: material('glossy orange plastic', [1.0, 0.34, 0.055, 1], { roughness: 0.34 }),
+  toyWhite: material('warm white plastic', [0.98, 0.96, 0.88, 1], { roughness: 0.42 }),
+  toyRed: material('glossy red plastic', [0.98, 0.075, 0.055, 1], { roughness: 0.36 }),
+  blackPlastic: material('soft black plastic', [0.018, 0.022, 0.028, 1], { roughness: 0.58 }),
+  tire: material('matte rubber tire', [0.006, 0.0065, 0.0075, 1], { roughness: 0.92 }),
+  rubberEdge: material('worn rubber edge', [0.052, 0.055, 0.058, 1], { roughness: 0.86 }),
+  metal: material('brushed toy metal', [0.78, 0.74, 0.62, 1], { metallic: 0.62, roughness: 0.27 }),
+  glass: material('smoked glossy visor', [0.035, 0.13, 0.22, 1], { roughness: 0.18, emissive: [0.0, 0.025, 0.05] }),
+  skin: material('warm driver face', [1.0, 0.72, 0.52, 1], { roughness: 0.55 }),
 };
+
+function material(name, color, opts = {}) {
+  return {
+    name,
+    color,
+    metallic: opts.metallic ?? 0,
+    roughness: opts.roughness ?? 0.55,
+    emissive: opts.emissive,
+  };
+}
 
 class MeshBuilder {
   constructor() {
@@ -41,6 +52,108 @@ class MeshBuilder {
       [[x0, y0, z0], [x1, y0, z0], [x1, y0, z1], [x0, y0, z1]],
     ];
     for (const corners of quads) this.addQuad(corners, material);
+  }
+
+  addChamferedBox(center, size, bevel, material) {
+    const hx = size.x * 0.5;
+    const hy = size.y * 0.5;
+    const hz = size.z * 0.5;
+    const b = Math.max(0, Math.min(bevel, hx * 0.45, hy * 0.45, hz * 0.45));
+    if (b <= 0.0001) {
+      this.addBox(center, size, material);
+      return;
+    }
+    const local = (x, y, z) => [center.x + x, center.y + y, center.z + z];
+
+    for (const sx of [-1, 1]) {
+      this.addPolygon([
+        local(sx * hx, -hy + b, -hz + b),
+        local(sx * hx, hy - b, -hz + b),
+        local(sx * hx, hy - b, hz - b),
+        local(sx * hx, -hy + b, hz - b),
+      ], material, center);
+    }
+    for (const sy of [-1, 1]) {
+      this.addPolygon([
+        local(-hx + b, sy * hy, -hz + b),
+        local(-hx + b, sy * hy, hz - b),
+        local(hx - b, sy * hy, hz - b),
+        local(hx - b, sy * hy, -hz + b),
+      ], material, center);
+    }
+    for (const sz of [-1, 1]) {
+      this.addPolygon([
+        local(-hx + b, -hy + b, sz * hz),
+        local(hx - b, -hy + b, sz * hz),
+        local(hx - b, hy - b, sz * hz),
+        local(-hx + b, hy - b, sz * hz),
+      ], material, center);
+    }
+
+    for (const sx of [-1, 1]) {
+      for (const sy of [-1, 1]) {
+        this.addPolygon([
+          local(sx * hx, sy * (hy - b), -hz + b),
+          local(sx * hx, sy * (hy - b), hz - b),
+          local(sx * (hx - b), sy * hy, hz - b),
+          local(sx * (hx - b), sy * hy, -hz + b),
+        ], material, center);
+      }
+      for (const sz of [-1, 1]) {
+        this.addPolygon([
+          local(sx * hx, -hy + b, sz * (hz - b)),
+          local(sx * hx, hy - b, sz * (hz - b)),
+          local(sx * (hx - b), hy - b, sz * hz),
+          local(sx * (hx - b), -hy + b, sz * hz),
+        ], material, center);
+      }
+    }
+    for (const sy of [-1, 1]) {
+      for (const sz of [-1, 1]) {
+        this.addPolygon([
+          local(-hx + b, sy * hy, sz * (hz - b)),
+          local(hx - b, sy * hy, sz * (hz - b)),
+          local(hx - b, sy * (hy - b), sz * hz),
+          local(-hx + b, sy * (hy - b), sz * hz),
+        ], material, center);
+      }
+    }
+    for (const sx of [-1, 1]) {
+      for (const sy of [-1, 1]) {
+        for (const sz of [-1, 1]) {
+          this.addPolygon([
+            local(sx * hx, sy * (hy - b), sz * (hz - b)),
+            local(sx * (hx - b), sy * hy, sz * (hz - b)),
+            local(sx * (hx - b), sy * (hy - b), sz * hz),
+          ], material, center);
+        }
+      }
+    }
+  }
+
+  addOrientedBox(center, axes, halfSize, material) {
+    const corners = [];
+    for (const sx of [-1, 1]) {
+      for (const sy of [-1, 1]) {
+        for (const sz of [-1, 1]) {
+          corners.push([
+            center.x + axes.x[0] * halfSize.x * sx + axes.y[0] * halfSize.y * sy + axes.z[0] * halfSize.z * sz,
+            center.y + axes.x[1] * halfSize.x * sx + axes.y[1] * halfSize.y * sy + axes.z[1] * halfSize.z * sz,
+            center.z + axes.x[2] * halfSize.x * sx + axes.y[2] * halfSize.y * sy + axes.z[2] * halfSize.z * sz,
+          ]);
+        }
+      }
+    }
+    const at = (sx, sy, sz) => corners[((sx > 0 ? 1 : 0) * 4) + ((sy > 0 ? 1 : 0) * 2) + (sz > 0 ? 1 : 0)];
+    const faces = [
+      [at(1, -1, -1), at(1, -1, 1), at(1, 1, 1), at(1, 1, -1)],
+      [at(-1, -1, 1), at(-1, -1, -1), at(-1, 1, -1), at(-1, 1, 1)],
+      [at(-1, 1, -1), at(1, 1, -1), at(1, 1, 1), at(-1, 1, 1)],
+      [at(-1, -1, 1), at(1, -1, 1), at(1, -1, -1), at(-1, -1, -1)],
+      [at(-1, -1, 1), at(-1, 1, 1), at(1, 1, 1), at(1, -1, 1)],
+      [at(1, -1, -1), at(1, 1, -1), at(-1, 1, -1), at(-1, -1, -1)],
+    ];
+    for (const face of faces) this.addPolygon(face, material, center);
   }
 
   addWedge({ x0, x1, z0, z1, bottom, topFront, topBack }, material) {
@@ -152,6 +265,27 @@ class MeshBuilder {
     );
   }
 
+  addPolygon(corners, material, outwardCenter) {
+    if (corners.length < 3) return;
+    let normal = faceNormal(corners[0], corners[1], corners[2]);
+    const mid = corners.reduce((acc, p) => ({ x: acc.x + p[0], y: acc.y + p[1], z: acc.z + p[2] }), { x: 0, y: 0, z: 0 });
+    mid.x /= corners.length;
+    mid.y /= corners.length;
+    mid.z /= corners.length;
+    const away = { x: mid.x - outwardCenter.x, y: mid.y - outwardCenter.y, z: mid.z - outwardCenter.z };
+    let ordered = corners;
+    if (dot({ x: normal[0], y: normal[1], z: normal[2] }, away) < 0) {
+      ordered = [...corners].reverse();
+      normal = faceNormal(ordered[0], ordered[1], ordered[2]);
+    }
+    const positions = ordered.flat();
+    const normals = Array.from({ length: ordered.length }, () => normal).flat();
+    const uvs = ordered.flatMap((_, i) => [i % 2, i > 1 ? 1 : 0]);
+    const indices = [];
+    for (let i = 1; i < ordered.length - 1; i++) indices.push(0, i, i + 1);
+    this.addPrimitive(positions, normals, uvs, indices, material);
+  }
+
   addPrimitive(positions, normals, uvs, indices, material) {
     this.primitives.push({
       positions: Float32Array.from(positions),
@@ -216,23 +350,25 @@ function normalize(a) {
 
 function makeKartBody() {
   const b = new MeshBuilder();
-  b.addBox({ x: 0, y: 0.04, z: 0.04 }, { x: 1.62, y: 0.44, z: 2.28 }, materials.blue);
-  b.addBox({ x: 0, y: -0.22, z: 0.04 }, { x: 1.38, y: 0.18, z: 2.08 }, materials.dark);
-  b.addWedge({ x0: -0.66, x1: 0.66, z0: -1.58, z1: -0.54, bottom: 0.04, topFront: 0.2, topBack: 0.56 }, materials.yellow);
-  b.addBox({ x: 0, y: 0.43, z: -0.76 }, { x: 1.34, y: 0.12, z: 0.18 }, materials.red);
-  b.addBox({ x: 0, y: 0.58, z: 0.12 }, { x: 0.82, y: 0.56, z: 0.72 }, materials.lightBlue);
+  b.addChamferedBox({ x: 0, y: 0.04, z: 0.04 }, { x: 1.66, y: 0.46, z: 2.3 }, 0.08, materials.toyBlue);
+  b.addChamferedBox({ x: 0, y: -0.22, z: 0.04 }, { x: 1.4, y: 0.18, z: 2.08 }, 0.045, materials.blackPlastic);
+  b.addWedge({ x0: -0.66, x1: 0.66, z0: -1.58, z1: -0.54, bottom: 0.04, topFront: 0.2, topBack: 0.56 }, materials.toyOrange);
+  b.addChamferedBox({ x: 0, y: 0.43, z: -0.76 }, { x: 1.32, y: 0.12, z: 0.2 }, 0.035, materials.toyWhite);
+  b.addChamferedBox({ x: -0.48, y: 0.49, z: -1.03 }, { x: 0.18, y: 0.08, z: 0.42 }, 0.025, materials.toyWhite);
+  b.addChamferedBox({ x: 0.48, y: 0.49, z: -1.03 }, { x: 0.18, y: 0.08, z: 0.42 }, 0.025, materials.toyWhite);
+  b.addChamferedBox({ x: 0, y: 0.58, z: 0.12 }, { x: 0.84, y: 0.56, z: 0.72 }, 0.075, materials.toyOrange);
   b.addWedge({ x0: -0.48, x1: 0.48, z0: -0.36, z1: 0.04, bottom: 0.54, topFront: 0.9, topBack: 0.68 }, materials.glass);
-  b.addSphere({ x: 0, y: 0.94, z: 0.0 }, 0.28, 16, 8, materials.red);
-  b.addBox({ x: 0, y: 0.88, z: -0.25 }, { x: 0.34, y: 0.14, z: 0.05 }, materials.skin);
-  b.addBox({ x: -0.72, y: 0.08, z: -0.78 }, { x: 0.22, y: 0.2, z: 0.56 }, materials.yellow);
-  b.addBox({ x: 0.72, y: 0.08, z: -0.78 }, { x: 0.22, y: 0.2, z: 0.56 }, materials.yellow);
-  b.addBox({ x: -0.72, y: 0.08, z: 0.84 }, { x: 0.22, y: 0.2, z: 0.58 }, materials.yellow);
-  b.addBox({ x: 0.72, y: 0.08, z: 0.84 }, { x: 0.22, y: 0.2, z: 0.58 }, materials.yellow);
-  b.addBox({ x: 0, y: 0.64, z: 1.33 }, { x: 1.86, y: 0.12, z: 0.24 }, materials.yellow);
-  b.addBox({ x: -0.62, y: 0.42, z: 1.26 }, { x: 0.11, y: 0.42, z: 0.1 }, materials.dark);
-  b.addBox({ x: 0.62, y: 0.42, z: 1.26 }, { x: 0.11, y: 0.42, z: 0.1 }, materials.dark);
-  b.addBox({ x: 0, y: 0.04, z: -1.45 }, { x: 1.82, y: 0.15, z: 0.18 }, materials.dark);
-  b.addBox({ x: 0, y: 0.04, z: 1.38 }, { x: 1.48, y: 0.14, z: 0.16 }, materials.dark);
+  b.addSphere({ x: 0, y: 0.94, z: 0.0 }, 0.29, 18, 9, materials.toyWhite);
+  b.addWedge({ x0: -0.2, x1: 0.2, z0: -0.29, z1: -0.12, bottom: 0.85, topFront: 0.97, topBack: 0.91 }, materials.glass);
+  b.addChamferedBox({ x: -0.72, y: 0.08, z: -0.78 }, { x: 0.24, y: 0.2, z: 0.56 }, 0.04, materials.toyOrange);
+  b.addChamferedBox({ x: 0.72, y: 0.08, z: -0.78 }, { x: 0.24, y: 0.2, z: 0.56 }, 0.04, materials.toyOrange);
+  b.addChamferedBox({ x: -0.72, y: 0.08, z: 0.84 }, { x: 0.24, y: 0.2, z: 0.58 }, 0.04, materials.toyOrange);
+  b.addChamferedBox({ x: 0.72, y: 0.08, z: 0.84 }, { x: 0.24, y: 0.2, z: 0.58 }, 0.04, materials.toyOrange);
+  b.addChamferedBox({ x: 0, y: 0.64, z: 1.33 }, { x: 1.86, y: 0.12, z: 0.24 }, 0.045, materials.toyOrange);
+  b.addChamferedBox({ x: -0.62, y: 0.42, z: 1.26 }, { x: 0.11, y: 0.42, z: 0.1 }, 0.025, materials.blackPlastic);
+  b.addChamferedBox({ x: 0.62, y: 0.42, z: 1.26 }, { x: 0.11, y: 0.42, z: 0.1 }, 0.025, materials.blackPlastic);
+  b.addChamferedBox({ x: 0, y: 0.04, z: -1.45 }, { x: 1.82, y: 0.15, z: 0.18 }, 0.045, materials.blackPlastic);
+  b.addChamferedBox({ x: 0, y: 0.04, z: 1.38 }, { x: 1.48, y: 0.14, z: 0.16 }, 0.04, materials.blackPlastic);
   b.addCylinderX({ x: -0.46, y: -0.02, z: 1.5 }, 0.1, 0.36, 16, materials.metal);
   b.addCylinderX({ x: 0.46, y: -0.02, z: 1.5 }, 0.1, 0.36, 16, materials.metal);
   return encodeGlb(b.primitives, 'MarbleRush cartoon kart body');
@@ -241,25 +377,51 @@ function makeKartBody() {
 function makeKartWheel() {
   const b = new MeshBuilder();
   b.addCylinderX({ x: 0, y: 0, z: 0 }, 0.44, 0.42, 32, materials.tire);
-  b.addCylinderX({ x: -0.23, y: 0, z: 0 }, 0.28, 0.05, 32, materials.yellow);
-  b.addCylinderX({ x: 0.23, y: 0, z: 0 }, 0.28, 0.05, 32, materials.yellow);
+  b.addCylinderX({ x: 0, y: 0, z: 0 }, 0.35, 0.45, 32, materials.rubberEdge);
+  b.addCylinderX({ x: -0.24, y: 0, z: 0 }, 0.29, 0.055, 32, materials.toyOrange);
+  b.addCylinderX({ x: 0.24, y: 0, z: 0 }, 0.29, 0.055, 32, materials.toyOrange);
   b.addCylinderX({ x: 0, y: 0, z: 0 }, 0.18, 0.48, 24, materials.metal);
+  addWheelSpokes(b, -0.275);
+  addWheelSpokes(b, 0.275);
   return encodeGlb(b.primitives, 'MarbleRush cartoon kart wheel');
 }
 
+function addWheelSpokes(builder, x) {
+  const axesX = [1, 0, 0];
+  for (let i = 0; i < 3; i++) {
+    const angle = i * Math.PI * 2 / 3 + 0.28;
+    const radial = [0, Math.sin(angle), Math.cos(angle)];
+    const tangent = [0, Math.cos(angle), -Math.sin(angle)];
+    builder.addOrientedBox({
+      x,
+      y: radial[1] * 0.17,
+      z: radial[2] * 0.17,
+    }, {
+      x: axesX,
+      y: radial,
+      z: tangent,
+    }, {
+      x: 0.018,
+      y: 0.13,
+      z: 0.035,
+    }, materials.toyWhite);
+  }
+}
+
 function encodeGlb(primitives, generator) {
+  const mergedPrimitives = mergePrimitivesByMaterial(primitives);
   const buffers = [];
   const views = [];
   const accessors = [];
-  const materialKeys = [];
+  const materialDefs = [];
   const primitiveDefs = [];
 
-  function materialIndex(color) {
-    const key = color.join(',');
-    let index = materialKeys.indexOf(key);
+  function materialIndex(mat) {
+    const key = mat.name ?? JSON.stringify(mat);
+    let index = materialDefs.findIndex((candidate) => candidate.key === key);
     if (index < 0) {
-      index = materialKeys.length;
-      materialKeys.push(key);
+      index = materialDefs.length;
+      materialDefs.push({ key, material: mat });
     }
     return index;
   }
@@ -278,7 +440,7 @@ function encodeGlb(primitives, generator) {
     return accessorIndex;
   }
 
-  for (const primitive of primitives) {
+  for (const primitive of mergedPrimitives) {
     const bounds = positionBounds(primitive.positions);
     const position = addTypedArray(primitive.positions, 34962, 'VEC3', 5126, primitive.positions.length / 3, bounds.min, bounds.max);
     const normal = addTypedArray(primitive.normals, 34962, 'VEC3', 5126, primitive.normals.length / 3);
@@ -298,13 +460,21 @@ function encodeGlb(primitives, generator) {
     scenes: [{ nodes: [0] }],
     nodes: [{ mesh: 0 }],
     meshes: [{ primitives: primitiveDefs }],
-    materials: materialKeys.map((key) => ({
-      pbrMetallicRoughness: {
-        baseColorFactor: key.split(',').map(Number),
-        roughnessFactor: 0.78,
-        metallicFactor: 0,
-      },
-    })),
+    materials: materialDefs.map(({ material: mat }) => {
+      const out = {
+        name: mat.name,
+        pbrMetallicRoughness: {
+          baseColorFactor: mat.color,
+          roughnessFactor: mat.roughness,
+          metallicFactor: mat.metallic,
+        },
+        doubleSided: true,
+      };
+      if (mat.emissive) {
+        out.emissiveFactor = mat.emissive;
+      }
+      return out;
+    }),
     buffers: [{ byteLength: bin.length }],
     bufferViews: views,
     accessors,
@@ -318,6 +488,44 @@ function encodeGlb(primitives, generator) {
   header.writeUInt32LE(2, 4);
   header.writeUInt32LE(length, 8);
   return Buffer.concat([header, glbChunk(jsonChunk, 0x4e4f534a), glbChunk(binChunk, 0x004e4942)]);
+}
+
+function mergePrimitivesByMaterial(primitives) {
+  const groups = [];
+  const byKey = new Map();
+
+  function keyFor(mat) {
+    return mat.name ?? JSON.stringify(mat);
+  }
+
+  for (const primitive of primitives) {
+    const key = keyFor(primitive.material);
+    let group = byKey.get(key);
+    if (!group) {
+      group = {
+        material: primitive.material,
+        positions: [],
+        normals: [],
+        uvs: [],
+        indices: [],
+      };
+      byKey.set(key, group);
+      groups.push(group);
+    }
+    const vertexOffset = group.positions.length / 3;
+    for (const value of primitive.positions) group.positions.push(value);
+    for (const value of primitive.normals) group.normals.push(value);
+    for (const value of primitive.uvs) group.uvs.push(value);
+    for (const value of primitive.indices) group.indices.push(value + vertexOffset);
+  }
+
+  return groups.map((group) => ({
+    positions: Float32Array.from(group.positions),
+    normals: Float32Array.from(group.normals),
+    uvs: Float32Array.from(group.uvs),
+    indices: Uint32Array.from(group.indices),
+    material: group.material,
+  }));
 }
 
 function positionBounds(positions) {

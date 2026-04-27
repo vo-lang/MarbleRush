@@ -6,7 +6,9 @@ import { fileURLToPath } from 'node:url';
 
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
 const outDir = join(root, 'assets', 'maps', 'demo_track');
+const audioDir = join(root, 'assets', 'audio');
 mkdirSync(outDir, { recursive: true });
+mkdirSync(audioDir, { recursive: true });
 
 const terrainWidth = 280;
 const terrainDepth = 240;
@@ -19,8 +21,10 @@ const shoulderWidth = 7.0;
 const shoulderDrop = 0.18;
 const terrainBlendWidth = 18.0;
 const samples = 192;
+const gateCount = 8;
 const trackTextureWidth = 512;
 const trackTextureHeight = 2048;
+const kartSpawnYOffset = 1.18;
 
 function centerAt(t) {
   return {
@@ -79,11 +83,15 @@ function terrainWorldY(x, z) {
 }
 
 function makeHeightmap() {
+  return makeHeightmapRegion(0, 0, terrainWidth, terrainDepth);
+}
+
+function makeHeightmapRegion(centerX, centerZ, width, depth) {
   const pixels = Buffer.alloc(heightmapSize * heightmapSize);
   for (let row = 0; row < heightmapSize; row++) {
-    const z = (row / (heightmapSize - 1) - 0.5) * terrainDepth;
+    const z = centerZ + (row / (heightmapSize - 1) - 0.5) * depth;
     for (let col = 0; col < heightmapSize; col++) {
-      const x = (col / (heightmapSize - 1) - 0.5) * terrainWidth;
+      const x = centerX + (col / (heightmapSize - 1) - 0.5) * width;
       const y = terrainWorldY(x, z);
       const h = Math.max(0, Math.min(1, (y - terrainY) / terrainHeight));
       pixels[row * heightmapSize + col] = Math.round(h * 255);
@@ -217,14 +225,162 @@ function makeTrackTexture() {
 }
 
 function trackLoopLength() {
+  const distances = trackDistances();
+  return distances[distances.length - 1];
+}
+
+function trackDistances() {
   let distance = 0;
   let previous = centerline[0];
+  const distances = [0];
   for (let i = 1; i <= samples; i++) {
     const p = centerline[i % samples];
     distance += Math.hypot(p.x - previous.x, p.z - previous.z);
+    distances.push(distance);
     previous = p;
   }
-  return distance;
+  return distances;
+}
+
+function trackPointAtDistance(distance) {
+  const distances = trackDistances();
+  const total = distances[distances.length - 1];
+  const d = ((distance % total) + total) % total;
+  for (let i = 0; i < samples; i++) {
+    const start = distances[i];
+    const end = distances[i + 1];
+    if (d > end && i < samples - 1) continue;
+    const a = centerline[i];
+    const b = centerline[(i + 1) % samples];
+    const span = Math.max(0.0001, end - start);
+    const t = Math.max(0, Math.min(1, (d - start) / span));
+    const tan = tangentAt(a.t * (1 - t) + b.t * t);
+    return {
+      x: a.x * (1 - t) + b.x * t,
+      y: a.y * (1 - t) + b.y * t,
+      z: a.z * (1 - t) + b.z * t,
+      tan,
+    };
+  }
+  return centerline[0];
+}
+
+function yawFromTangent(tan) {
+  return Math.atan2(-tan.x, -tan.z);
+}
+
+function makeTrackCenterline() {
+  return [...centerline, centerline[0]].map((p, index) => ({
+    name: `cp_${String(index).padStart(3, '0')}`,
+    position: { x: p.x, y: p.y, z: p.z },
+    width: trackWidth,
+    bank: 0.045 * Math.sin(p.t * 2.0 - 0.4),
+  }));
+}
+
+function makeTrackGates(totalDistance) {
+  return Array.from({ length: gateCount }, (_, i) => {
+    const distance = (totalDistance * (i + 1)) / gateCount;
+    return {
+      name: i === gateCount - 1 ? 'Finish' : `Gate ${i + 1}`,
+      distance,
+      width: trackWidth + 4.0,
+      radius: Math.max(11.0, trackWidth * 0.78),
+    };
+  });
+}
+
+function makeTrackRespawns(totalDistance) {
+  return Array.from({ length: gateCount }, (_, i) => {
+    const distance = (totalDistance * i) / gateCount;
+    const p = trackPointAtDistance(distance);
+    return {
+      name: i === 0 ? 'start_respawn' : `respawn_${i}`,
+      distance,
+      position: { x: p.x, y: p.y + kartSpawnYOffset, z: p.z },
+      yaw: yawFromTangent(p.tan),
+    };
+  });
+}
+
+function makeTerrainChunks() {
+  const chunkW = terrainWidth * 0.5;
+  const chunkD = terrainDepth * 0.5;
+  const chunks = [];
+  for (const zSign of [-1, 1]) {
+    for (const xSign of [-1, 1]) {
+      const name = `${zSign < 0 ? 'north' : 'south'}_${xSign < 0 ? 'west' : 'east'}`;
+      chunks.push({
+        tag: `terrain_${name}`,
+        heightmap: `heightmap_${name}.png`,
+        position: { x: xSign * chunkW * 0.5, y: terrainY, z: zSign * chunkD * 0.5 },
+        width: chunkW,
+        height: terrainHeight,
+        depth: chunkD,
+        uvScale: 12,
+        tintSet: true,
+        tint: { r: 0.43, g: 0.78, b: 0.38, a: 1 },
+        friction: 0.92,
+      });
+    }
+  }
+  return chunks;
+}
+
+function makeRacingLines(totalDistance) {
+  const count = 48;
+  const points = Array.from({ length: count + 1 }, (_, i) => {
+    const distance = (totalDistance * i) / count;
+    const phase = (i / count) * Math.PI * 2;
+    return {
+      distance,
+      lateral: Math.sin(phase * 2.0 + 0.4) * trackWidth * 0.18,
+      targetSpeed: 24 + 7 * (0.5 + 0.5 * Math.cos(phase * 3.0 - 0.6)),
+    };
+  });
+  return [{ name: 'optimal', points }];
+}
+
+function makeTrackSurfaces(totalDistance) {
+  const half = trackWidth * 0.5;
+  return [{
+    name: 'asphalt',
+    kind: 'road',
+    start: 0,
+    end: 0,
+    left: -half,
+    right: half,
+    priority: 0,
+    friction: 1.0,
+  }, {
+    name: 'boost_lane',
+    kind: 'road',
+    start: totalDistance * 0.18,
+    end: totalDistance * 0.235,
+    left: -3.3,
+    right: 3.3,
+    priority: 4,
+    friction: 1.08,
+    boost: 1.25,
+  }, {
+    name: 'left_grass',
+    kind: 'offroad',
+    start: 0,
+    end: 0,
+    left: -half - shoulderWidth - terrainBlendWidth,
+    right: -half,
+    priority: 1,
+    friction: 0.62,
+  }, {
+    name: 'right_grass',
+    kind: 'offroad',
+    start: 0,
+    end: 0,
+    left: half,
+    right: half + shoulderWidth + terrainBlendWidth,
+    priority: 1,
+    friction: 0.62,
+  }];
 }
 
 function makeTrackVisualGlb(trackTexture) {
@@ -396,9 +552,39 @@ function pad4(buffer, fill) {
   return pad === 0 ? buffer : Buffer.concat([buffer, Buffer.alloc(pad, fill)]);
 }
 
+function makeToneWav({ frequency = 220, duration = 1.0, volume = 0.35, wobble = 0 }) {
+  const sampleRate = 22050;
+  const count = Math.max(1, Math.floor(sampleRate * duration));
+  const data = Buffer.alloc(count * 2);
+  for (let i = 0; i < count; i++) {
+    const t = i / sampleRate;
+    const f = frequency * (1 + wobble * Math.sin(t * Math.PI * 2 * 5));
+    const envelope = Math.min(1, i / (sampleRate * 0.02)) * Math.min(1, (count - i) / (sampleRate * 0.03));
+    const sample = Math.sin(t * Math.PI * 2 * f) * volume * envelope;
+    data.writeInt16LE(Math.max(-32767, Math.min(32767, Math.round(sample * 32767))), i * 2);
+  }
+  const header = Buffer.alloc(44);
+  header.write('RIFF', 0, 'ascii');
+  header.writeUInt32LE(36 + data.length, 4);
+  header.write('WAVE', 8, 'ascii');
+  header.write('fmt ', 12, 'ascii');
+  header.writeUInt32LE(16, 16);
+  header.writeUInt16LE(1, 20);
+  header.writeUInt16LE(1, 22);
+  header.writeUInt32LE(sampleRate, 24);
+  header.writeUInt32LE(sampleRate * 2, 28);
+  header.writeUInt16LE(2, 32);
+  header.writeUInt16LE(16, 34);
+  header.write('data', 36, 'ascii');
+  header.writeUInt32LE(data.length, 40);
+  return Buffer.concat([header, data]);
+}
+
+const totalDistance = trackLoopLength();
 const start = centerAt(0);
 const startTan = tangentAt(0);
-const startYaw = Math.atan2(-startTan.x, -startTan.z);
+const startYaw = yawFromTangent(startTan);
+const terrainChunks = makeTerrainChunks();
 
 const map = {
   version: 1,
@@ -427,15 +613,68 @@ const map = {
   }],
   spawns: [{
     name: 'player_start',
-    position: { x: start.x, y: start.y + 2.2, z: start.z },
+    position: { x: start.x, y: start.y + kartSpawnYOffset, z: start.z },
     yaw: startYaw,
   }],
 };
 
+const track = {
+  version: 1,
+  name: 'demo_track',
+  closedLoop: true,
+  terrainChunks,
+  meshes: [{
+    name: 'track_mesh',
+    model: 'track.glb',
+    collision: 'none',
+  }, {
+    name: 'track_collision',
+    model: 'track_collision.glb',
+    collision: 'trimesh',
+    hidden: true,
+    friction: 1.05,
+  }],
+  centerline: makeTrackCenterline(),
+  surfaces: makeTrackSurfaces(totalDistance),
+  gates: makeTrackGates(totalDistance),
+  spawns: [{
+    name: 'player_start',
+    distance: 0,
+    position: { x: start.x, y: start.y + kartSpawnYOffset, z: start.z },
+    yaw: startYaw,
+  }],
+  respawns: makeTrackRespawns(totalDistance),
+  triggers: [{
+    name: 'lap_line',
+    kind: 'lap',
+    distance: 0,
+    radius: Math.max(11.0, trackWidth * 0.78),
+  }],
+  racingLines: makeRacingLines(totalDistance),
+  metadata: [
+    { key: 'authoringTool', value: 'tools/generate_demo_track.mjs' },
+    { key: 'units', value: 'meters' },
+    { key: 'forward', value: '-Z' },
+    { key: 'yaw', value: 'radians around +Y' },
+  ],
+};
+
 writeFileSync(join(outDir, 'heightmap.png'), makeHeightmap());
+for (const chunk of terrainChunks) {
+  writeFileSync(
+    join(outDir, chunk.heightmap),
+    makeHeightmapRegion(chunk.position.x, chunk.position.z, chunk.width, chunk.depth),
+  );
+}
 const trackTexture = makeTrackTexture();
 writeFileSync(join(outDir, 'track_texture.png'), trackTexture);
 writeFileSync(join(outDir, 'track.glb'), makeTrackVisualGlb(trackTexture));
 writeFileSync(join(outDir, 'track_collision.glb'), makeTrackCollisionGlb());
 writeFileSync(join(outDir, 'map.json'), `${JSON.stringify(map, null, 2)}\n`);
+writeFileSync(join(outDir, 'track.json'), `${JSON.stringify(track, null, 2)}\n`);
+writeFileSync(join(audioDir, 'kart_engine.wav'), makeToneWav({ frequency: 115, duration: 1.2, volume: 0.26, wobble: 0.08 }));
+writeFileSync(join(audioDir, 'kart_skid.wav'), makeToneWav({ frequency: 520, duration: 0.8, volume: 0.16, wobble: 0.18 }));
+writeFileSync(join(audioDir, 'kart_boost.wav'), makeToneWav({ frequency: 760, duration: 0.7, volume: 0.2, wobble: 0.12 }));
+writeFileSync(join(audioDir, 'kart_grass.wav'), makeToneWav({ frequency: 175, duration: 0.9, volume: 0.14, wobble: 0.22 }));
+writeFileSync(join(audioDir, 'kart_hit.wav'), makeToneWav({ frequency: 90, duration: 0.18, volume: 0.45, wobble: 0.4 }));
 console.log(`generated ${outDir}`);

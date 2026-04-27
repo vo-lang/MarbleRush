@@ -2,12 +2,15 @@ package main
 
 import (
 	"github.com/vo-lang/voplay"
+	"github.com/vo-lang/voplay/scene3d"
 )
 
 type PlayState struct {
 	world *World
 	elapsed float64
 	debugOverlayVisible bool
+	renderDebugMode int
+	heroCameraVisible bool
 }
 
 func NewPlayState() *PlayState {
@@ -17,8 +20,12 @@ func NewPlayState() *PlayState {
 func (s *PlayState) Enter(g *voplay.GameCtx) {
 	s.elapsed = 0
 	bindGameActions(g)
-	s.applyDebugOverlay(g)
 	s.world = NewWorld(g)
+	s.applyDebugOverlay(g)
+	if s.world != nil {
+		s.world.SetRenderDebugMode(s.renderDebugMode)
+		s.world.SetHeroCameraVisible(s.heroCameraVisible)
+	}
 }
 
 func (s *PlayState) Exit(g *voplay.GameCtx) {
@@ -41,6 +48,21 @@ func (s *PlayState) Update(g *voplay.GameCtx, dt float64) {
 	if g.Actions.IsPressed("toggle_debug_overlay") {
 		s.debugOverlayVisible = !s.debugOverlayVisible
 		s.applyDebugOverlay(g)
+	}
+	if g.Actions.IsPressed("cycle_render_debug") {
+		s.renderDebugMode++
+		if s.renderDebugMode > scene3d.RenderDebugAmbient {
+			s.renderDebugMode = scene3d.RenderDebugLit
+		}
+		if s.world != nil {
+			s.world.SetRenderDebugMode(s.renderDebugMode)
+		}
+	}
+	if g.Actions.IsPressed("toggle_hero_camera") {
+		s.heroCameraVisible = !s.heroCameraVisible
+		if s.world != nil {
+			s.world.SetHeroCameraVisible(s.heroCameraVisible)
+		}
 	}
 	if s.world == nil {
 		return
@@ -68,11 +90,8 @@ func (s *PlayState) applyDebugOverlay(g *voplay.GameCtx) {
 }
 
 func bindGameActions(g *voplay.GameCtx) {
-	g.Actions.Rebind("move_left", voplay.KeyBinding("a"), voplay.KeyBinding("ArrowLeft"))
-	g.Actions.Rebind("move_right", voplay.KeyBinding("d"), voplay.KeyBinding("ArrowRight"))
-	g.Actions.Rebind("move_forward", voplay.KeyBinding("w"), voplay.KeyBinding("ArrowUp"))
-	g.Actions.Rebind("move_back", voplay.KeyBinding("s"), voplay.KeyBinding("ArrowDown"))
-	g.Actions.Rebind("drift", voplay.KeyBinding("Space"))
 	g.Actions.Rebind("reset", voplay.KeyBinding("r"))
 	g.Actions.Rebind("toggle_debug_overlay", voplay.KeyBinding("F3"))
+	g.Actions.Rebind("cycle_render_debug", voplay.KeyBinding("F4"))
+	g.Actions.Rebind("toggle_hero_camera", voplay.KeyBinding("F5"))
 }
