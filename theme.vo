@@ -86,14 +86,47 @@ type WorldHUDState struct {
 	DebugOverlayVisible bool
 	RenderDebugMode int
 	HeroCameraVisible bool
+	PerfFPS float64
+	PerfFrameMs float64
+	PerfLogicMs float64
+	PerfInputMs float64
+	PerfAdvanceMs float64
+	PerfDrawMs float64
+	PerfOverlayMs float64
+	PerfBudgetMs float64
+	PerfMaxFrameMs float64
+	PerfMaxLogicMs float64
+	PerfDrawBytes int
+	PerfSubmitBytes int
+	PerfFixedSteps int
+	PerfSlowFrames int
+	PerfSlowLogs int
+	PerfLastSlowReason string
+	PerfLastSlowFrameMs float64
+	PerfLastSlowLogicMs float64
 	SceneActive int
 	SceneVisible int
+	SceneCulled int
 	SceneModels int
 	SceneUpserts int
+	SceneDestroyed int
+	SceneBatchEligible int
+	SceneBatchGroups int
+	SceneFlushMs float64
+	SceneFrameMs float64
 	TrackEntities int
 	PrimitiveInstances int
+	PrimitiveVisibleInstances int
 	PrimitiveChunks int
+	PrimitiveVisibleChunks int
 	PrimitiveGroups int
+	PrimitiveDrawCalls int
+	PrimitiveUploadBytes int
+	VehicleGrounded bool
+	WheelContacts int
+	WheelCount int
+	WheelMaxSlip float64
+	WheelMaxCompression float64
 }
 
 func drawWorldHUD(theme WorldTheme, g *voplay.GameCtx, hud WorldHUDState) {
@@ -142,18 +175,35 @@ func drawWorldHUD(theme WorldTheme, g *voplay.GameCtx, hud WorldHUDState) {
 		g.Draw.DrawRect(driftX + 80, 193, 82 * charge, 10, fillColor)
 	}
 	if hud.DebugOverlayVisible {
-		debugX := float64(g.Width - 160 - 24)
-		if debugX < 24 {
-			debugX = 24
-		}
-		drawHudPanel(g.Draw, theme, debugX, float64(g.Height - 48), 160, 28, 0.78)
-		g.Draw.DrawRect(debugX, float64(g.Height - 48), 160, 5, theme.AccentColor)
-		g.Draw.DrawText("F3 debug", debugX + 14, float64(g.Height - 26), 16, theme.HudTextColor)
-		drawHudPanel(g.Draw, theme, 24, 146, 390, 102, 0.78)
-		g.Draw.DrawRect(24, 146, 330, 5, theme.AccentColor)
-		g.Draw.DrawText("Scene A/V/M " + itoa(hud.SceneActive) + "/" + itoa(hud.SceneVisible) + "/" + itoa(hud.SceneModels), 38, 172, 16, theme.HudTextColor)
-		g.Draw.DrawText("Upserts " + itoa(hud.SceneUpserts) + "  Track ents " + itoa(hud.TrackEntities), 38, 196, 16, theme.HudSubtextColor)
-		g.Draw.DrawText("Primitive I/C/G " + itoa(hud.PrimitiveInstances) + "/" + itoa(hud.PrimitiveChunks) + "/" + itoa(hud.PrimitiveGroups), 38, 220, 16, theme.HudSubtextColor)
+		debugX := 24.0
+		debugY := 190.0
+		debugW := 520.0
+		debugH := 252.0
+		drawHudPanel(g.Draw, theme, debugX, debugY, debugW, debugH, 0.80)
+		g.Draw.DrawRect(debugX, debugY, debugW, 6, theme.AccentColor)
+		lineY := debugY + 27
+		lineH := 20.0
+		g.Draw.DrawText("F3 perf  fps " + formatHudFloat(hud.PerfFPS, 1) + "  frame " + formatHudMs(hud.PerfFrameMs) + " / budget " + formatHudMs(hud.PerfBudgetMs) + "  logic " + formatHudMs(hud.PerfLogicMs), debugX + 14, lineY, 15, theme.HudTextColor)
+		lineY += lineH
+		g.Draw.DrawText("slow " + itoa(hud.PerfSlowFrames) + " logs " + itoa(hud.PerfSlowLogs) + " last " + hud.PerfLastSlowReason + " " + formatHudMs(hud.PerfLastSlowFrameMs) + " logic " + formatHudMs(hud.PerfLastSlowLogicMs), debugX + 14, lineY, 15, theme.HudSubtextColor)
+		lineY += lineH
+		g.Draw.DrawText("max frame " + formatHudMs(hud.PerfMaxFrameMs) + "  max logic " + formatHudMs(hud.PerfMaxLogicMs) + "  fixed steps " + itoa(hud.PerfFixedSteps), debugX + 14, lineY, 15, theme.HudSubtextColor)
+		lineY += lineH
+		g.Draw.DrawText("bytes draw " + formatHudBytes(hud.PerfDrawBytes) + "  submit " + formatHudBytes(hud.PerfSubmitBytes), debugX + 14, lineY, 15, theme.HudSubtextColor)
+		lineY += lineH + 3
+		g.Draw.DrawText("phase input/advance/draw/overlay " + formatHudMs(hud.PerfInputMs) + "/" + formatHudMs(hud.PerfAdvanceMs) + "/" + formatHudMs(hud.PerfDrawMs) + "/" + formatHudMs(hud.PerfOverlayMs), debugX + 14, lineY, 15, theme.HudSubtextColor)
+		lineY += lineH + 3
+		g.Draw.DrawText("scene active/visible/culled/model " + itoa(hud.SceneActive) + "/" + itoa(hud.SceneVisible) + "/" + itoa(hud.SceneCulled) + "/" + itoa(hud.SceneModels), debugX + 14, lineY, 15, theme.HudTextColor)
+		lineY += lineH
+		g.Draw.DrawText("scene upsert/destroy/batch/groups " + itoa(hud.SceneUpserts) + "/" + itoa(hud.SceneDestroyed) + "/" + itoa(hud.SceneBatchEligible) + "/" + itoa(hud.SceneBatchGroups), debugX + 14, lineY, 15, theme.HudSubtextColor)
+		lineY += lineH
+		g.Draw.DrawText("scene cpu flush " + formatHudMs(hud.SceneFlushMs) + "  frame " + formatHudMs(hud.SceneFrameMs) + "  track ents " + itoa(hud.TrackEntities), debugX + 14, lineY, 15, theme.HudSubtextColor)
+		lineY += lineH + 3
+		g.Draw.DrawText("primitive inst visible/total " + itoa(hud.PrimitiveVisibleInstances) + "/" + itoa(hud.PrimitiveInstances) + "  chunks " + itoa(hud.PrimitiveVisibleChunks) + "/" + itoa(hud.PrimitiveChunks), debugX + 14, lineY, 15, theme.HudTextColor)
+		lineY += lineH
+		g.Draw.DrawText("primitive groups/draws/upload " + itoa(hud.PrimitiveGroups) + "/" + itoa(hud.PrimitiveDrawCalls) + "/" + formatHudBytes(hud.PrimitiveUploadBytes), debugX + 14, lineY, 15, theme.HudSubtextColor)
+		lineY += lineH + 3
+		g.Draw.DrawText("vehicle grounded " + boolHud(hud.VehicleGrounded) + "  wheels " + itoa(hud.WheelContacts) + "/" + itoa(hud.WheelCount) + "  slip " + formatHudFloat(hud.WheelMaxSlip, 2) + "  comp " + formatHudFloat(hud.WheelMaxCompression, 2), debugX + 14, lineY, 15, theme.HudTextColor)
 	}
 	if hud.RenderDebugMode != scene3d.RenderDebugLit {
 		viewW := 240.0
@@ -203,6 +253,34 @@ func drawHudPanel(d *voplay.DrawCtx, theme WorldTheme, x, y, width, height float
 
 func formatTime(seconds float64) string {
 	return fmt.Sprintf("%.1fs", seconds)
+}
+
+func formatHudFloat(value float64, digits int) string {
+	if digits <= 1 {
+		return fmt.Sprintf("%.1f", value)
+	}
+	return fmt.Sprintf("%.2f", value)
+}
+
+func formatHudMs(value float64) string {
+	return fmt.Sprintf("%.2fms", value)
+}
+
+func formatHudBytes(value int) string {
+	if value >= 1024 * 1024 {
+		return fmt.Sprintf("%.2fMB", float64(value) / (1024.0 * 1024.0))
+	}
+	if value >= 1024 {
+		return fmt.Sprintf("%.1fKB", float64(value) / 1024.0)
+	}
+	return itoa(value) + "B"
+}
+
+func boolHud(value bool) string {
+	if value {
+		return "yes"
+	}
+	return "no"
 }
 
 func renderDebugLabel(mode int) string {

@@ -19,6 +19,7 @@ const (
 	primitiveTerrainY = -2.6
 	primitiveTerrainHeight = 12.0
 	primitiveLandmarkScale = 1.42
+	primitiveStaticBatchCellSize = 0.0
 )
 
 type MarblePrimitiveScene struct {
@@ -117,7 +118,7 @@ func (w *World) ensurePrimitiveScene() *MarblePrimitiveScene {
 func newMarblePrimitiveScene(scene *scene3d.Scene) *MarblePrimitiveScene {
 	shapes := primitive3d.NewShapeRegistry()
 	materials := primitive3d.NewMaterialPalette()
-	staticLayer := primitive3d.NewLayer(primitive3d.LayerDesc{Kind: primitive3d.StaticLayer, Shapes: shapes, Materials: materials, Chunking: primitive3d.ChunkingDesc{CellSize: 36}, Name: "marblerush_static_primitives"})
+	staticLayer := primitive3d.NewLayer(primitive3d.LayerDesc{Kind: primitive3d.StaticLayer, Shapes: shapes, Materials: materials, Chunking: primitive3d.ChunkingDesc{CellSize: primitiveStaticBatchCellSize}, Name: "marblerush_static_primitives"})
 	dynamicLayer := primitive3d.NewLayer(primitive3d.LayerDesc{Kind: primitive3d.DynamicLayer, Shapes: shapes, Materials: materials, Name: "marblerush_dynamic_primitives"})
 	p := &MarblePrimitiveScene{Shapes: shapes, Materials: materials, Static: staticLayer, Dynamic: dynamicLayer}
 	p.Box = shapes.Shape(primitive3d.ShapeDesc{Kind: primitive3d.ShapeBox})
@@ -440,8 +441,20 @@ func (w *World) buildPrimitiveTrackVisuals(track *scene3d.Track) {
 			w.addPrimitiveRocksAtPose(pose, -(pose.HalfWidth + 12.5))
 		}
 	}
-	w.addPrimitiveStartGantry(track.PoseAt(0))
+	w.addPrimitiveStartGantry(primitiveTrackStartPose(track))
 	w.addPrimitiveClouds()
+}
+
+func primitiveTrackStartPose(track *scene3d.Track) scene3d.TrackPose {
+	if track == nil || track.Asset() == nil {
+		return scene3d.TrackPose{}
+	}
+	for _, spawn := range track.Asset().Spawns {
+		if spawn.Name == "player_start" {
+			return track.PoseAt(spawn.Distance)
+		}
+	}
+	return track.PoseAt(0)
 }
 
 func (w *World) addContinuousPrimitiveRoadVisuals(track *scene3d.Track) {
