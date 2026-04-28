@@ -44,20 +44,20 @@ digest = "sha256:a8cd94beffcec3d8d3d70940435a86fb2ad38e78268d691fb48433406d1bfd9
 
 [[resolved]]
 path = "github.com/vo-lang/vopack"
-version = "v0.1.1"
+version = "v0.1.2"
 vo = "^0.1.0"
 commit = "d2063001e66405ad800bdabe0c7e7ff6343149de"
-release_manifest = "sha256:fcf7f0995945fe3b48e5319d6a15ab4da8173076098fc013196f8487334e249c"
-source = "sha256:afc9c48744d87b0608fdc31b54902bffde5f57f229f1da44c2dec410182e1b0e"
+release_manifest = "sha256:dbac1aac7641ff2d61abe05d902c215ba31aa7dac0b67da825c6810ffb05ce33"
+source = "sha256:a9018288c427c06c434c623504591ef32a666568de6524ca84af27dd2e6f0f45"
 deps = []
 
 [[resolved]]
 path = "github.com/vo-lang/voplay"
-version = "v0.1.21"
+version = "v0.1.22"
 vo = "^0.1.0"
-commit = "e762d01f977344eb2beb0c64271d84b9abe865a2"
-release_manifest = "sha256:00857d0c159f9a63c9fc52de49d5547cdf09c56fee502a7ace5fa2268d139826"
-source = "sha256:c8bf6f4c31d4cec5e0f55da007991d090821903e0eba016162dcb2953f2f03ba"
+commit = "c724839853b4129d77ec1de5bf9db269eec9f79e"
+release_manifest = "sha256:ac0e0cd0d56e7ecabcdc467a069e042282abfa7c53f332458fdea374dbf243b7"
+source = "sha256:8dec3692378d8e586df21872dde8a8eed827f2e4a93c8d97fcedb5b412a87e0a"
 deps = ["github.com/vo-lang/vogui", "github.com/vo-lang/vopack"]
 
 [[resolved.artifact]]
