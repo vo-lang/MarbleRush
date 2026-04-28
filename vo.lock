@@ -7,11 +7,11 @@ vo = "^0.1.0"
 
 [[resolved]]
 path = "github.com/vo-lang/vogui"
-version = "v0.1.13"
+version = "v0.1.14"
 vo = "^0.1.0"
-commit = "cf4d0163aed96f66747bdeb7d893f8efaccca1bb"
-release_manifest = "sha256:5bbf9c83f3edab9fb6a2c390f2473f80797eebe272eaec483e6c887590025575"
-source = "sha256:1631e71bf375012ba0f84102d9cc2cab4c5575c702acb61e5522011707b78fc6"
+commit = "18ad520ccaee8665e5b5681194ad8de3509aef64"
+release_manifest = "sha256:3a6a38f108876ad45a939b754fe3ff2e8ce0a77667292a21d505fd3b0a794660"
+source = "sha256:98295485d728ac70c963cf151386b203d68065ff0397ce43f19e5e86d2fc67ab"
 deps = []
 
 [[resolved.artifact]]
@@ -26,7 +26,7 @@ kind = "extension-native"
 target = "x86_64-pc-windows-msvc"
 name = "vo_vogui.dll"
 size = 1381376
-digest = "sha256:7136967af3d0793ab07a2fe6a12df0e5ab27507852bb9fdd1d2bb8890600542b"
+digest = "sha256:6ee0e663b71e89867b1816ae297cc6c76bee081f1df57e4ce4effcabef4895ee"
 
 [[resolved.artifact]]
 kind = "extension-native"
@@ -53,11 +53,11 @@ deps = []
 
 [[resolved]]
 path = "github.com/vo-lang/voplay"
-version = "v0.1.22"
+version = "v0.1.23"
 vo = "^0.1.0"
-commit = "c724839853b4129d77ec1de5bf9db269eec9f79e"
-release_manifest = "sha256:ac0e0cd0d56e7ecabcdc467a069e042282abfa7c53f332458fdea374dbf243b7"
-source = "sha256:8dec3692378d8e586df21872dde8a8eed827f2e4a93c8d97fcedb5b412a87e0a"
+commit = "44f62aee974e6803d4155297f6a33cc8499f81c2"
+release_manifest = "sha256:fc2b6a5245e9a4f026fb81b6729c0df6e61a723b5dcc24e7e70ddad89f20c5b4"
+source = "sha256:69cd2765549557a557accdf60e695fdb4f12159be4e2ac6e34afbe7f37a0fe22"
 deps = ["github.com/vo-lang/vogui", "github.com/vo-lang/vopack"]
 
 [[resolved.artifact]]
