@@ -12,7 +12,7 @@ const (
 	defaultTrackFilePath = "assets/maps/scenic_track/track.json"
 	fallbackTrackPackPath = "maps/demo_track/track.json"
 	fallbackTrackFilePath = "assets/maps/demo_track/track.json"
-	trackAssetGroup = "marblerush-track"
+	trackAssetGroup = "blockkart-track"
 )
 
 func (w *World) loadDemoTrack() {

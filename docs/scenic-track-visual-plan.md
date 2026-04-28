@@ -1,4 +1,4 @@
-# MarbleRush Scenic Track Visual Plan
+# BlockKart Scenic Track Visual Plan
 
 This plan treats visual quality as an engine validation target. The goal is not to finish racing gameplay first; the goal is to prove that voplay can render a large, attractive, stylized kart-racing scene with real assets, real materials, and a coherent outdoor track.
 
@@ -8,7 +8,7 @@ This plan treats visual quality as an engine validation target. The goal is not 
 
 ## Target
 
-MarbleRush should open into a bright, readable, large-scale kart racing environment:
+BlockKart should open into a bright, readable, large-scale kart racing environment:
 
 - a continuous asphalt track with sweeping banked turns
 - road shoulders and grass transitions that look intentional
@@ -146,11 +146,11 @@ Output:
 - packed textures and material overrides
 - a reproducible screenshot exposure check
 
-### Phase D: MarbleRush Integration
+### Phase D: BlockKart Integration
 
 Make the scenic track the visual reference scene:
 
-- MarbleRush loads the scenic track through `TrackAsset`
+- BlockKart loads the scenic track through `TrackAsset`
 - camera starts at a composed view of the track
 - existing kart can spawn on the scenic track
 - debug overlay can be toggled without affecting the visual pass
@@ -169,7 +169,7 @@ Acceptance:
 - web runner shows textured road, terrain, props, sky, and fog
 - no black track, missing texture, or flat-background-only failure
 - screenshot reads close to the concept reference in composition and color intent
-- `vo check .` passes for MarbleRush
+- `vo check .` passes for BlockKart
 - voplay reference demo and relevant voplay tests still pass
 
 ## Visual Bar
@@ -183,7 +183,7 @@ The scene is acceptable when a screenshot communicates these three things immedi
 ## Proposed File Layout
 
 ```text
-MarbleRush/
+BlockKart/
   docs/
     scenic-track-visual-plan.md
     images/
@@ -213,7 +213,7 @@ Build `tools/generate_scenic_track.mjs` to output a closed-loop visual track pac
 - initial asphalt and grass textures
 - `track.json` referencing all generated assets
 
-Then wire it into `tools/pack_assets.vo` and load it from MarbleRush as the default visual reference scene.
+Then wire it into `tools/pack_assets.vo` and load it from BlockKart as the default visual reference scene.
 
 ## Implementation Status
 
@@ -225,12 +225,12 @@ Started:
 - Scenic terrain now carries a four-layer splat material through `track.json`/`map.json`: grass, meadow, dirt, and rock layers each provide albedo, normal, metallic-roughness, UV scale, and normal scale. This validates voplay's heightfield terrain material path beyond a single flat grass texture.
 - The tire barrier art has moved from upright placeholder torus rings to concept-reference horizontal tire stacks with colored rubber albedo, rubber normals, black tire holes, raised ribs, and groove geometry.
 - `tools/pack_assets.vo` validates and packs both `demo_track` and `scenic_track`.
-- MarbleRush now attempts to load `maps/scenic_track/track.json` first and falls back to `demo_track`.
+- BlockKart now attempts to load `maps/scenic_track/track.json` first and falls back to `demo_track`.
 - `tools/validate_track.vo` defaults to the scenic track.
 
 Current verification:
 
-- `vo check .` passes for MarbleRush.
+- `vo check .` passes for BlockKart.
 - `vo run tools/validate_track.vo` passes with zero warnings on the scenic track.
 - The in-app runner displays the scenic track with textured road, curbs, terrain, trees, distant hills, and the kart.
 - The first rounded/materialized hero trackside marker is generated into `scenic_props.glb` and verified in the in-app runner.

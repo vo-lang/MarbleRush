@@ -1,6 +1,6 @@
-# MarbleRush Step 0-1 Plan
+# BlockKart Step 0-1 Plan
 
-This document narrows the next phase of MarbleRush to two goals only:
+This document narrows the next phase of BlockKart to two goals only:
 
 1. Step 0: upgrade the visual presentation from tech demo to a cheerful toy-like action game.
 2. Step 1: define reusable scene building blocks that can assemble levels cleanly.
@@ -9,7 +9,7 @@ Level text format and authored levels are intentionally out of scope for this ph
 
 ## Current State
 
-Today MarbleRush is a solid movement prototype, but it still reads like an engine proof:
+Today BlockKart is a solid movement prototype, but it still reads like an engine proof:
 
 - the world is assembled directly inside `world.vo`
 - geometry is hard-coded as one-off cubes
@@ -62,7 +62,7 @@ Use a small palette with clear roles:
 - Main path solids: warm cream, yellow, coral, or orange-red accents
 - Structural blockers: muted blue-gray
 - Goal zone: gold + red or gold + teal
-- Player marble: glossy bright color that stands apart from the level
+- Player kart: glossy bright color that stands apart from the level
 
 The key point is role separation, not exact hex permanence. Final colors can shift after the first playable pass.
 
@@ -204,7 +204,7 @@ If a task does not improve Step 0 or Step 1 directly, it should wait.
 
 ## Deliverables
 
-This phase is done when MarbleRush has:
+This phase is done when BlockKart has:
 
 1. a coherent playful visual direction
 2. debug-style HUD removed from normal play

@@ -24,7 +24,7 @@ const (
 	playerResetY = -25.0
 )
 
-const worldAssetGroup = "marblerush-world"
+const worldAssetGroup = "blockkart-world"
 
 type World struct {
 	scene *scene3d.Scene
@@ -43,7 +43,7 @@ type World struct {
 	assetPackPath string
 	track *scene3d.Track
 	trackResult *scene3d.TrackSpawnResult
-	primitive *MarblePrimitiveScene
+	primitive *BlockKartPrimitiveScene
 	racingDebugOverlay *scene3d.RacingDebugOverlay
 	heroCameraVisible bool
 	checkpointPosition voplay.Vec3
@@ -220,7 +220,7 @@ func (w *World) loadAssets(assets *voplay.Assets) {
 
 func mountSkyboxPack(assets *voplay.Assets) string {
 	for _, root := range assetRootCandidates() {
-		path := filepath.Join([]string{root, "marblerush.vpak"})
+		path := filepath.Join([]string{root, "blockkart.vpak"})
 		err := assets.Mount(path, 0)
 		if err == nil {
 			return path
@@ -269,8 +269,8 @@ func assetRootCandidates() []string {
 		}
 	}
 	roots = appendAssetRoot(roots, "assets")
-	roots = appendAssetRoot(roots, "MarbleRush/assets")
-	roots = appendAssetRoot(roots, "/MarbleRush/assets")
+	roots = appendAssetRoot(roots, "BlockKart/assets")
+	roots = appendAssetRoot(roots, "/BlockKart/assets")
 	return roots
 }
 
@@ -787,13 +787,7 @@ func (w *World) hudState(debugOverlayVisible bool, perf voplay.DebugOverlayStats
 			}
 		}
 	}
-	return WorldHUDState{
-		Time: w.courseTime, FinishTime: w.finishTime, Collected: w.collected, TotalCollectibles: len(w.collectibles), Checkpoint: w.checkpointLabel, NextGate: w.nextGateLabel, Lap: w.lap, TotalLaps: w.totalLaps, Speed: math.Abs(w.kartSpeed), Boosting: w.isBoosting(), Drifting: w.drifting, DriftCharge: w.driftCharge, Message: w.message, MessageTimer: w.messageTimer, Finished: w.finished, DebugOverlayVisible: debugOverlayVisible, RenderDebugMode: renderDebugMode, HeroCameraVisible: w.heroCameraVisible,
-		PerfFPS: perf.FPS, PerfFrameMs: perf.FrameMs, PerfLogicMs: perf.LogicMs, PerfInputMs: perf.InputMs, PerfAdvanceMs: perf.AdvanceMs, PerfDrawMs: perf.DrawMs, PerfOverlayMs: perf.OverlayMs, PerfBudgetMs: perf.FrameBudgetMs, PerfMaxFrameMs: perf.MaxFrameMs, PerfMaxLogicMs: perf.MaxLogicMs, PerfDrawBytes: perf.DrawBytes, PerfSubmitBytes: perf.SubmitBytes, PerfFixedSteps: perf.FixedSteps, PerfSlowFrames: perf.SlowFrames, PerfSlowLogs: perf.SlowLogs, PerfLastSlowReason: perf.LastSlowReason, PerfLastSlowFrameMs: perf.LastSlowFrameMs, PerfLastSlowLogicMs: perf.LastSlowLogicMs,
-		SceneActive: stats.ActiveEntities, SceneVisible: stats.VisibleEntities, SceneCulled: stats.CulledEntities, SceneModels: stats.ModelEntities, SceneUpserts: stats.UpsertedObjects, SceneDestroyed: stats.DestroyedObjects, SceneBatchEligible: stats.BatchEligibleObjects, SceneBatchGroups: stats.BatchGroups, SceneFlushMs: stats.FlushCpuMs, SceneFrameMs: stats.FrameCpuMs, TrackEntities: trackEntities,
-		PrimitiveInstances: primitiveInstances, PrimitiveVisibleInstances: primitiveVisibleInstances, PrimitiveChunks: primitiveChunks, PrimitiveVisibleChunks: primitiveVisibleChunks, PrimitiveGroups: primitiveGroups, PrimitiveDrawCalls: primitiveDrawCalls, PrimitiveUploadBytes: primitiveUploadBytes,
-		VehicleGrounded: vehicleGrounded, WheelContacts: wheelContacts, WheelCount: wheelCount, WheelMaxSlip: wheelMaxSlip, WheelMaxCompression: wheelMaxCompression,
-	}
+	return WorldHUDState{Time: w.courseTime, FinishTime: w.finishTime, Collected: w.collected, TotalCollectibles: len(w.collectibles), Checkpoint: w.checkpointLabel, NextGate: w.nextGateLabel, Lap: w.lap, TotalLaps: w.totalLaps, Speed: math.Abs(w.kartSpeed), Boosting: w.isBoosting(), Drifting: w.drifting, DriftCharge: w.driftCharge, Message: w.message, MessageTimer: w.messageTimer, Finished: w.finished, DebugOverlayVisible: debugOverlayVisible, RenderDebugMode: renderDebugMode, HeroCameraVisible: w.heroCameraVisible, PerfFPS: perf.FPS, PerfFrameMs: perf.FrameMs, PerfLogicMs: perf.LogicMs, PerfInputMs: perf.InputMs, PerfAdvanceMs: perf.AdvanceMs, PerfDrawMs: perf.DrawMs, PerfOverlayMs: perf.OverlayMs, PerfBudgetMs: perf.FrameBudgetMs, PerfMaxFrameMs: perf.MaxFrameMs, PerfMaxLogicMs: perf.MaxLogicMs, PerfDrawBytes: perf.DrawBytes, PerfSubmitBytes: perf.SubmitBytes, PerfFixedSteps: perf.FixedSteps, PerfSlowFrames: perf.SlowFrames, PerfSlowLogs: perf.SlowLogs, PerfLastSlowReason: perf.LastSlowReason, PerfLastSlowFrameMs: perf.LastSlowFrameMs, PerfLastSlowLogicMs: perf.LastSlowLogicMs, SceneActive: stats.ActiveEntities, SceneVisible: stats.VisibleEntities, SceneCulled: stats.CulledEntities, SceneModels: stats.ModelEntities, SceneUpserts: stats.UpsertedObjects, SceneDestroyed: stats.DestroyedObjects, SceneBatchEligible: stats.BatchEligibleObjects, SceneBatchGroups: stats.BatchGroups, SceneFlushMs: stats.FlushCpuMs, SceneFrameMs: stats.FrameCpuMs, TrackEntities: trackEntities, PrimitiveInstances: primitiveInstances, PrimitiveVisibleInstances: primitiveVisibleInstances, PrimitiveChunks: primitiveChunks, PrimitiveVisibleChunks: primitiveVisibleChunks, PrimitiveGroups: primitiveGroups, PrimitiveDrawCalls: primitiveDrawCalls, PrimitiveUploadBytes: primitiveUploadBytes, VehicleGrounded: vehicleGrounded, WheelContacts: wheelContacts, WheelCount: wheelCount, WheelMaxSlip: wheelMaxSlip, WheelMaxCompression: wheelMaxCompression}
 }
 
 func (w *World) isBoosting() bool {

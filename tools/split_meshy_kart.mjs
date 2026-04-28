@@ -181,7 +181,7 @@ function buildGlb(sourceJson, sourceBin, primitive, tris, center) {
   }
 
   const json = {
-    asset: { version: '2.0', generator: 'MarbleRush Meshy kart splitter' },
+    asset: { version: '2.0', generator: 'BlockKart Meshy kart splitter' },
     scenes: [{ nodes: [0] }],
     scene: 0,
     nodes: [{ mesh: 0 }],

@@ -1,4 +1,4 @@
-module github.com/vo-lang/marblerush
+module github.com/vo-lang/blockkart
 
 vo ^0.1.0
 

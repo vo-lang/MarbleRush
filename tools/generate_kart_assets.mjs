@@ -371,7 +371,7 @@ function makeKartBody() {
   b.addChamferedBox({ x: 0, y: 0.04, z: 1.38 }, { x: 1.48, y: 0.14, z: 0.16 }, 0.04, materials.blackPlastic);
   b.addCylinderX({ x: -0.46, y: -0.02, z: 1.5 }, 0.1, 0.36, 16, materials.metal);
   b.addCylinderX({ x: 0.46, y: -0.02, z: 1.5 }, 0.1, 0.36, 16, materials.metal);
-  return encodeGlb(b.primitives, 'MarbleRush cartoon kart body');
+  return encodeGlb(b.primitives, 'BlockKart cartoon kart body');
 }
 
 function makeKartWheel() {
@@ -383,7 +383,7 @@ function makeKartWheel() {
   b.addCylinderX({ x: 0, y: 0, z: 0 }, 0.18, 0.48, 24, materials.metal);
   addWheelSpokes(b, -0.275);
   addWheelSpokes(b, 0.275);
-  return encodeGlb(b.primitives, 'MarbleRush cartoon kart wheel');
+  return encodeGlb(b.primitives, 'BlockKart cartoon kart wheel');
 }
 
 function addWheelSpokes(builder, x) {

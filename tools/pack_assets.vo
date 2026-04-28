@@ -6,7 +6,7 @@ import (
 	"os"
 )
 
-const assetPackPath = "assets/marblerush.vpak"
+const assetPackPath = "assets/blockkart.vpak"
 
 const demoTrackPackPath = "maps/demo_track/track.json"
 
@@ -40,7 +40,7 @@ func main() {
 	must(scene3d.RequireValidTrackBakeOutput(scenicTrackAsset, scenicBakeOutput))
 	w, err := vopack.Create(assetPackPath)
 	must(err)
-	w.SetManifestInfo("MarbleRush", "demo")
+	w.SetManifestInfo("BlockKart", "demo")
 	addPackFile(w, "skybox/right.png", "assets/skybox/right.png", nil)
 	addPackFile(w, "skybox/left.png", "assets/skybox/left.png", nil)
 	addPackFile(w, "skybox/top.png", "assets/skybox/top.png", nil)

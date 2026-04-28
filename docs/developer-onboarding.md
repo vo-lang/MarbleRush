@@ -1,6 +1,6 @@
-# MarbleRush Developer Onboarding
+# BlockKart Developer Onboarding
 
-This document is a short map for new developers joining the `volang`, `voplay`, and `MarbleRush` codebases.
+This document is a short map for new developers joining the `volang`, `voplay`, and `BlockKart` codebases.
 
 ## Repository Roles
 
@@ -8,14 +8,14 @@ This document is a short map for new developers joining the `volang`, `voplay`, 
 
 `voplay` is the game engine layer written for Vo projects. It provides the game loop, input, draw command stream, resource loading, `scene3d`, `primitive3d`, and the Rust/WebGPU renderer.
 
-`MarbleRush` is the game project. It depends on `voplay` and is currently moving toward a low-poly, Nintendo-like kart racing look built from a small fixed set of primitive meshes and materials.
+`BlockKart` is the game project. It depends on `voplay` and is currently moving toward a low-poly, Nintendo-like kart racing look built from a small fixed set of primitive meshes and materials.
 
 ## Local Paths
 
 ```text
 /Users/wuhao/code/github/volang
 /Users/wuhao/code/github/voplay
-/Users/wuhao/code/github/MarbleRush
+/Users/wuhao/code/github/BlockKart
 ```
 
 ## Running The Studio
@@ -27,21 +27,21 @@ cd /Users/wuhao/code/github/volang
 ./d.py studio
 ```
 
-Open MarbleRush in the runner:
+Open BlockKart in the runner:
 
 ```text
-http://localhost:5174/?proj=/Users/wuhao/code/github/MarbleRush&mode=runner&debug=1#/runner
+http://localhost:5174/?proj=/Users/wuhao/code/github/BlockKart&mode=runner&debug=1#/runner
 ```
 
-The project path is passed through the `proj` query parameter. A project does not need to be a sibling of `MarbleRush`; it can live anywhere as long as the absolute path is supplied.
+The project path is passed through the `proj` query parameter. A project does not need to be a sibling of `BlockKart`; it can live anywhere as long as the absolute path is supplied.
 
 ## Common Checks
 
-Check MarbleRush:
+Check BlockKart:
 
 ```bash
 cd /Users/wuhao/code/github/volang
-./d.py check /Users/wuhao/code/github/MarbleRush
+./d.py check /Users/wuhao/code/github/BlockKart
 ```
 
 Check a voplay primitive rendering example:
@@ -70,9 +70,9 @@ cargo test
 
 Normal games should be paced by the display pulse / `requestAnimationFrame`. Timer-driven frame pacing is avoided because browser timers can introduce long-tail stalls. `UncappedFrameRate` is reserved for measurement and stress testing.
 
-Primitive rendering is intended to be an engine-level module, not a MarbleRush-specific patch. The goal is to render many objects from a fixed set of primitive shapes and a small material palette through retained layers, batching, chunking, and GPU instancing.
+Primitive rendering is intended to be an engine-level module, not a BlockKart-specific patch. The goal is to render many objects from a fixed set of primitive shapes and a small material palette through retained layers, batching, chunking, and GPU instancing.
 
-## MarbleRush Key Files
+## BlockKart Key Files
 
 ```text
 main.vo              Entry point and voplay.Game configuration.
@@ -114,7 +114,7 @@ Interpretation:
 
 ## Visual Direction
 
-MarbleRush is aiming for a readable low-poly toy-like style:
+BlockKart is aiming for a readable low-poly toy-like style:
 
 - Clear silhouettes before small details.
 - Strong primary color palettes rather than scattered accent colors.

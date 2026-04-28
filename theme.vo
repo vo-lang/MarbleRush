@@ -53,10 +53,7 @@ func applyWorldTheme(theme WorldTheme, scene *scene3d.Scene) {
 	profile := scene3d.KartRacingLightingProfile()
 	profile.Ambient = voplay.Color{R: 0.56, G: 0.66, B: 0.74, A: 1}
 	profile.AmbientGround = voplay.Color{R: 0.26, G: 0.34, B: 0.24, A: 1}
-	profile.Lights = []scene3d.Light{
-		{Type: scene3d.DirectionalLight, Direction: voplay.Vec3{X: -0.48, Y: 0.72, Z: -0.50}.Normalize(), Color: voplay.Hex(0xfff0b8), Intensity: 1.88},
-		{Type: scene3d.DirectionalLight, Direction: voplay.Vec3{X: 0.58, Y: 0.32, Z: 0.34}.Normalize(), Color: voplay.Hex(0xa8dcff), Intensity: 0.32},
-	}
+	profile.Lights = []scene3d.Light{{Type: scene3d.DirectionalLight, Direction: voplay.Vec3{X: -0.48, Y: 0.72, Z: -0.50}.Normalize(), Color: voplay.Hex(0xfff0b8), Intensity: 1.88}, {Type: scene3d.DirectionalLight, Direction: voplay.Vec3{X: 0.58, Y: 0.32, Z: 0.34}.Normalize(), Color: voplay.Hex(0xa8dcff), Intensity: 0.32}}
 	profile.Fog.Color = theme.FogColor
 	profile.Fog.Start = 230
 	profile.Fog.End = 520
@@ -132,7 +129,7 @@ type WorldHUDState struct {
 func drawWorldHUD(theme WorldTheme, g *voplay.GameCtx, hud WorldHUDState) {
 	drawHudPanel(g.Draw, theme, 24, 22, 430, 112, 0.88)
 	g.Draw.DrawRect(24, 22, 430, 10, theme.HudTrimColor)
-	g.Draw.DrawText("MarbleRush", 42, 58, 30, theme.HudTextColor)
+	g.Draw.DrawText("BlockKart", 42, 58, 30, theme.HudTextColor)
 	g.Draw.DrawText("Primitive Track", 42, 86, 20, theme.HudAccentTextColor)
 	g.Draw.DrawText("Retained primitive render path", 42, 112, 18, theme.HudSubtextColor)
 	courseX := float64(g.Width - 330 - 24)

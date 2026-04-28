@@ -2,7 +2,7 @@ version = 1
 created_by = "vo mod sync"
 
 [root]
-module = "github.com/vo-lang/marblerush"
+module = "github.com/vo-lang/blockkart"
 vo = "^0.1.0"
 
 [[resolved]]

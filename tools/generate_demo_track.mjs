@@ -513,7 +513,7 @@ function encodeGlb(model) {
     return { pbrMetallicRoughness: pbr };
   });
   const json = {
-    asset: { version: '2.0', generator: 'MarbleRush demo track generator' },
+    asset: { version: '2.0', generator: 'BlockKart demo track generator' },
     scene: 0,
     scenes: [{ nodes: [0] }],
     nodes: [{ mesh: 0 }],

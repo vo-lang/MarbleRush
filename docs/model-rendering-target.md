@@ -1,10 +1,10 @@
-# MarbleRush Model Rendering Target
+# BlockKart Model Rendering Target
 
-This document defines the non-negotiable visual target for MarbleRush model rendering. The goal is not "slightly better than now"; the goal is a polished stylized kart-racing scene where a single hero asset looks intentional, tactile, and production-worthy before we scale the approach to the whole track.
+This document defines the non-negotiable visual target for BlockKart model rendering. The goal is not "slightly better than now"; the goal is a polished stylized kart-racing scene where a single hero asset looks intentional, tactile, and production-worthy before we scale the approach to the whole track.
 
 ## North Star
 
-MarbleRush should render stylized kart-racing assets with the clarity, saturation, material separation, and lighting polish of a premium cartoon racing game.
+BlockKart should render stylized kart-racing assets with the clarity, saturation, material separation, and lighting polish of a premium cartoon racing game.
 
 The scene should read as:
 
@@ -103,7 +103,7 @@ Build a material verification scene and debug views before making more assets.
 
 Deliverables:
 
-- debug view selector in voplay or MarbleRush runner
+- debug view selector in voplay or BlockKart runner
 - lit/albedo/normal/roughness/metallic/shadow/ambient modes
 - one material test asset with known albedo, normal, roughness, and metallic values
 - screenshot set saved under `docs/images/`
@@ -117,7 +117,7 @@ Current implementation:
 
 - voplay exposes `SetRenderDebug3D` and `scene3d.Scene.RenderDebugMode`.
 - The mesh, skinned mesh, and terrain shaders support lit, albedo, normal, roughness, metallic, shadow, direct, and ambient debug output.
-- MarbleRush runner cycles the view with F4 and displays the active view label.
+- BlockKart runner cycles the view with F4 and displays the active view label.
 - Normal, roughness, and metallic debug proofs are saved at:
   - `docs/images/render-debug-normal.png`
   - `docs/images/render-debug-roughness.png`
@@ -146,8 +146,8 @@ Current implementation:
 - voplay lighting profiles now carry sky/ground hemisphere ambient, and the mesh/skinned/terrain shaders use the surface normal to blend between them.
 - voplay `MaterialDesc` now exposes engine-level `MetallicRoughness` texture override and `NormalScale`, matching the renderer's glTF PBR texture path instead of leaving roughness/metallic locked to source assets.
 - voplay heightfield terrain now supports single-material normal and metallic-roughness textures, with `normalScale`, `roughness`, and `metallic` coming from the map/track terrain data.
-- voplay terrain splat layers now use the same material path for layer albedo, normal, metallic-roughness, UV scale, and normal scale; MarbleRush's scenic terrain exercises that path with grass, meadow, dirt, and rock layers.
-- MarbleRush keeps shadows enabled through the kart racing profile, with softened stylized contact shadows.
+- voplay terrain splat layers now use the same material path for layer albedo, normal, metallic-roughness, UV scale, and normal scale; BlockKart's scenic terrain exercises that path with grass, meadow, dirt, and rock layers.
+- BlockKart keeps shadows enabled through the kart racing profile, with softened stylized contact shadows.
 - Lit proof after the first shadow-strength pass is saved at `docs/images/render-p1-lit-shadow-strength.png`.
 - Lit proof after the hemisphere ambient pass is saved at `docs/images/render-p1-hemisphere-ambient.png`.
 
@@ -175,7 +175,7 @@ Current implementation:
 - The hero marker appears both inside `assets/maps/scenic_track/scenic_props.glb` and as standalone showcase assets:
   - `assets/models/scenic/corner_marker_showcase.glb`
   - `assets/models/scenic/material_showcase.glb`
-- MarbleRush exposes an F5 hero inspection camera so the asset can be judged close-up through the normal runner instead of only from the racing chase camera.
+- BlockKart exposes an F5 hero inspection camera so the asset can be judged close-up through the normal runner instead of only from the racing chase camera.
 - Current proof screenshots are saved at:
   - `docs/images/hero-marker-lit.png`
   - `docs/images/hero-marker-lit-lighting-pass.png`
@@ -185,7 +185,7 @@ Current implementation:
   - `docs/images/hero-marker-roughness.png`
   - `docs/images/hero-marker-metallic.png`
   - `docs/images/hero-marker-tire-closeup.png`
-- MarbleRush's outdoor lighting profile now uses a warmer stronger key light, a cooler fill light, brighter hemisphere ambient, softened shadows, and a modest exposure/contrast/saturation pass for the scenic slice.
+- BlockKart's outdoor lighting profile now uses a warmer stronger key light, a cooler fill light, brighter hemisphere ambient, softened shadows, and a modest exposure/contrast/saturation pass for the scenic slice.
 
 Remaining gaps:
 

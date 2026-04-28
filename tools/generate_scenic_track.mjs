@@ -1923,7 +1923,7 @@ function encodeGlb(model) {
     return out;
   });
   const json = {
-    asset: { version: '2.0', generator: 'MarbleRush scenic track generator' },
+    asset: { version: '2.0', generator: 'BlockKart scenic track generator' },
     scene: 0,
     scenes: [{ nodes: [0] }],
     nodes: [{ mesh: 0 }],
