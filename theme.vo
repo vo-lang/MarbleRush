@@ -127,6 +127,10 @@ type WorldHUDState struct {
 }
 
 func drawWorldHUD(theme WorldTheme, g *voplay.GameCtx, hud WorldHUDState) {
+	if voplay.IsCompactTouchLayout(g.Width, g.Height) {
+		drawCompactWorldHUD(theme, g, hud)
+		return
+	}
 	drawHudPanel(g.Draw, theme, 24, 22, 430, 112, 0.88)
 	g.Draw.DrawRect(24, 22, 430, 10, theme.HudTrimColor)
 	g.Draw.DrawText("BlockKart", 42, 58, 30, theme.HudTextColor)
@@ -240,6 +244,91 @@ func drawWorldHUD(theme WorldTheme, g *voplay.GameCtx, hud WorldHUDState) {
 		g.Draw.DrawText("Time " + formatTime(hud.FinishTime), panelX + 54, panelY + 92, 24, theme.HudTextColor)
 		g.Draw.DrawText("Items " + itoa(hud.Collected) + "/" + itoa(hud.TotalCollectibles), panelX + 54, panelY + 122, 22, theme.HudSubtextColor)
 		g.Draw.DrawText("Press R to race again", panelX + 54, panelY + 150, 20, theme.HudAccentTextColor)
+	}
+}
+
+func drawCompactWorldHUD(theme WorldTheme, g *voplay.GameCtx, hud WorldHUDState) {
+	w := float64(g.Width)
+	leftW := 214.0
+	if w < 430 {
+		leftW = w * 0.50 - 20
+	}
+	if leftW < 158 {
+		leftW = 158
+	}
+	rightW := 154.0
+	if w < 430 {
+		rightW = w * 0.42 - 16
+	}
+	if rightW < 126 {
+		rightW = 126
+	}
+	rightX := w - rightW - 14
+	drawHudPanel(g.Draw, theme, 12, 12, leftW, 82, 0.82)
+	g.Draw.DrawRect(12, 12, leftW, 6, theme.HudTrimColor)
+	g.Draw.DrawText("BlockKart", 24, 42, 21, theme.HudTextColor)
+	g.Draw.DrawText("Lap " + itoa(hud.Lap) + "/" + itoa(hud.TotalLaps) + "  Items " + itoa(hud.Collected) + "/" + itoa(hud.TotalCollectibles), 24, 70, 15, theme.HudAccentTextColor)
+	drawHudPanel(g.Draw, theme, rightX, 12, rightW, 82, 0.82)
+	g.Draw.DrawRect(rightX, 12, rightW, 6, theme.GoalTrimColor)
+	g.Draw.DrawText(itoa(int(hud.Speed + 0.5)) + " km/h", rightX + 14, 42, 20, theme.HudTextColor)
+	g.Draw.DrawText(formatTime(hud.Time), rightX + 14, 70, 16, theme.HudAccentTextColor)
+	if hud.Boosting {
+		boostW := 116.0
+		boostX := w - boostW - 14
+		drawHudPanel(g.Draw, theme, boostX, 102, boostW, 32, 0.80)
+		g.Draw.DrawRect(boostX, 102, boostW, 5, theme.BoostColor)
+		g.Draw.DrawText("BOOST", boostX + 24, 126, 17, theme.HudTextColor)
+	}
+	if hud.Drifting || hud.DriftCharge > 0 {
+		charge := clampFloat(hud.DriftCharge / kartSuperTurboCharge, 0, 1)
+		barW := 128.0
+		barX := 12.0
+		barY := 102.0
+		label := "DRIFT"
+		fillColor := theme.BoostColor
+		if hud.DriftCharge >= kartSuperTurboCharge {
+			label = "SUPER"
+			fillColor = theme.GoalTrimColor
+		} else if hud.DriftCharge >= kartMiniTurboCharge {
+			label = "MINI"
+			fillColor = theme.AccentColor
+		}
+		drawHudPanel(g.Draw, theme, barX, barY, barW, 34, 0.80)
+		g.Draw.DrawText(label, barX + 12, barY + 23, 15, theme.HudTextColor)
+		g.Draw.DrawRect(barX + 62, barY + 14, 52, 8, theme.HudShadowColor.WithAlpha(0.3))
+		g.Draw.DrawRect(barX + 62, barY + 14, 52 * charge, 8, fillColor)
+	}
+	if hud.MessageTimer > 0 && !hud.Finished {
+		msgW := w - 56
+		if msgW > 320 {
+			msgW = 320
+		}
+		msgX := (w - msgW) * 0.5
+		drawHudPanel(g.Draw, theme, msgX, 142, msgW, 38, 0.84)
+		g.Draw.DrawRect(msgX, 142, msgW, 5, theme.AccentColor)
+		g.Draw.DrawText(hud.Message, msgX + 18, 168, 18, theme.HudTextColor)
+	}
+	if hud.RenderDebugMode != scene3d.RenderDebugLit {
+		viewW := 180.0
+		viewX := (w - viewW) * 0.5
+		drawHudPanel(g.Draw, theme, viewX, 98, viewW, 32, 0.82)
+		g.Draw.DrawRect(viewX, 98, viewW, 5, theme.AccentColor)
+		g.Draw.DrawText("View " + renderDebugLabel(hud.RenderDebugMode), viewX + 14, 122, 16, theme.HudTextColor)
+	}
+	if hud.Finished {
+		panelW := w - 46
+		if panelW > 350 {
+			panelW = 350
+		}
+		panelH := 150.0
+		panelX := (w - panelW) * 0.5
+		panelY := (float64(g.Height) - panelH) * 0.5
+		drawHudPanel(g.Draw, theme, panelX, panelY, panelW, panelH, 0.92)
+		g.Draw.DrawRect(panelX, panelY, panelW, 8, theme.GoalTrimColor)
+		g.Draw.DrawText("RACE COMPLETE", panelX + 36, panelY + 46, 25, theme.HudAccentTextColor)
+		g.Draw.DrawText("Time " + formatTime(hud.FinishTime), panelX + 36, panelY + 82, 20, theme.HudTextColor)
+		g.Draw.DrawText("Items " + itoa(hud.Collected) + "/" + itoa(hud.TotalCollectibles), panelX + 36, panelY + 112, 18, theme.HudSubtextColor)
+		g.Draw.DrawText("Tap RST to race again", panelX + 36, panelY + 138, 16, theme.HudAccentTextColor)
 	}
 }
 

@@ -33,6 +33,10 @@ type World struct {
 	vehicle *scene3d.Vehicle
 	kartController *scene3d.KartController
 	racingInput *scene3d.RacingInputProfile
+	touchControls TouchDriveUI
+	touchInput scene3d.RacingInput
+	touchInputActive bool
+	touchResetPressed bool
 	vehicleAudio *scene3d.VehicleAudio
 	startPosition voplay.Vec3
 	startYaw float64
@@ -349,7 +353,8 @@ func (w *World) setupVehicleAudio() {
 }
 
 func (w *World) FixedUpdate(g *voplay.GameCtx, dt float64) {
-	if g.Actions.IsPressed("reset") {
+	w.updateTouchControls(g)
+	if g.Actions.IsPressed("reset") || w.touchResetPressed {
 		w.restartRun()
 		return
 	}
@@ -381,6 +386,9 @@ func (w *World) applyKartDrive(g *voplay.GameCtx, dt float64) {
 	input := scene3d.RacingInput{}
 	if w.racingInput != nil {
 		input = w.racingInput.Read()
+	}
+	if w.touchInputActive {
+		input = mergeRacingInput(input, w.touchInput)
 	}
 	vehicleInput := input.VehicleInput()
 	boosting := w.boostTimer > 0 || input.Boost
@@ -724,6 +732,14 @@ func (w *World) updateHeroInspectionCamera() {
 func (w *World) Draw(g *voplay.GameCtx, debugOverlayVisible bool) {
 	w.scene.Draw(g.Draw)
 	drawWorldHUD(w.theme, g, w.hudState(debugOverlayVisible, g.DebugOverlayStats()))
+	w.touchControls.Draw(g.Draw)
+}
+
+func (w *World) updateTouchControls(g *voplay.GameCtx) {
+	snapshot := w.touchControls.Read(g)
+	w.touchInput = snapshot.Input
+	w.touchInputActive = snapshot.Active
+	w.touchResetPressed = snapshot.ResetPressed
 }
 
 func (w *World) resetPlayer() {

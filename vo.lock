@@ -1,5 +1,5 @@
 version = 1
-created_by = "vo mod sync"
+created_by = "vo mod add"
 
 [root]
 module = "github.com/vo-lang/blockkart"
@@ -53,37 +53,37 @@ deps = []
 
 [[resolved]]
 path = "github.com/vo-lang/voplay"
-version = "v0.1.23"
+version = "v0.1.24"
 vo = "^0.1.0"
-commit = "44f62aee974e6803d4155297f6a33cc8499f81c2"
-release_manifest = "sha256:fc2b6a5245e9a4f026fb81b6729c0df6e61a723b5dcc24e7e70ddad89f20c5b4"
-source = "sha256:69cd2765549557a557accdf60e695fdb4f12159be4e2ac6e34afbe7f37a0fe22"
+commit = "083929bdc401fe3babbf9c52c1cfa6156d666abf"
+release_manifest = "sha256:3838023c885ed8555956140776c26e33bbbbd6a8f1f879429f05bd485ba3cc4d"
+source = "sha256:f87f069164fd009d7321e73910fee3c5d0300a9cf70173b31f6b79ee02d4901b"
 deps = ["github.com/vo-lang/vogui", "github.com/vo-lang/vopack"]
 
 [[resolved.artifact]]
 kind = "extension-js-glue"
 target = "wasm32-unknown-unknown"
 name = "voplay_island.js"
-size = 101164
-digest = "sha256:49439914186dfcc31d824aa322ed3284c76ef65c726ba4feb309fa11596a8b44"
+size = 101455
+digest = "sha256:144d465cd057545b81d091c67a9f234a40d6449431fc071eff7c347d92aa0559"
 
 [[resolved.artifact]]
 kind = "extension-native"
 target = "aarch64-apple-darwin"
 name = "libvo_voplay.dylib"
-size = 10006272
-digest = "sha256:eaec9f3262a58a3953704afe4bacf9fe8050c941054ab1f48c9f2fcf8ad52dea"
+size = 10007552
+digest = "sha256:8adbb0c142a7708debff77bd088b402a1df4778b37aaf1a1261e349c72df9b5d"
 
 [[resolved.artifact]]
 kind = "extension-native"
 target = "x86_64-unknown-linux-gnu"
 name = "libvo_voplay.so"
-size = 13558320
-digest = "sha256:862622935020826ca1aebbeb1b5803f06e74ec6c4e166020ba396cf122de4898"
+size = 13558368
+digest = "sha256:aab94e2aaecb8ccb3fc52dcfdd3afd192ebf43088841cf382bb91357723a2e3d"
 
 [[resolved.artifact]]
 kind = "extension-wasm"
 target = "wasm32-unknown-unknown"
 name = "voplay_island_bg.wasm"
-size = 3331731
-digest = "sha256:2ca59025ccb92c1830573bc3465c1cea9590f53d0dabda1507e32e22c1945d33"
+size = 3368967
+digest = "sha256:5a00822b3df5c066196913068c0ccccaae9aa6c21f8ab213a3548a4a8902c082"
