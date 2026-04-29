@@ -731,7 +731,8 @@ func (w *World) updateHeroInspectionCamera() {
 
 func (w *World) Draw(g *voplay.GameCtx, debugOverlayVisible bool) {
 	w.scene.Draw(g.Draw)
-	drawWorldHUD(w.theme, g, w.hudState(debugOverlayVisible, g.DebugOverlayStats()))
+	hud := w.hudState(debugOverlayVisible, g.DebugOverlayStats())
+	drawWorldHUD(&w.theme, g, &hud)
 	w.touchControls.Draw(g.Draw)
 }
 

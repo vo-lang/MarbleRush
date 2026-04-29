@@ -1,4 +1,5 @@
 **/.vo-cache/
 vo.work
+target/
 .DS_Store
 **/.DS_Store

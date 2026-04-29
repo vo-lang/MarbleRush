@@ -126,7 +126,7 @@ type WorldHUDState struct {
 	WheelMaxCompression float64
 }
 
-func drawWorldHUD(theme WorldTheme, g *voplay.GameCtx, hud WorldHUDState) {
+func drawWorldHUD(theme *WorldTheme, g *voplay.GameCtx, hud *WorldHUDState) {
 	if voplay.IsCompactTouchLayout(g.Width, g.Height) {
 		drawCompactWorldHUD(theme, g, hud)
 		return
@@ -247,7 +247,7 @@ func drawWorldHUD(theme WorldTheme, g *voplay.GameCtx, hud WorldHUDState) {
 	}
 }
 
-func drawCompactWorldHUD(theme WorldTheme, g *voplay.GameCtx, hud WorldHUDState) {
+func drawCompactWorldHUD(theme *WorldTheme, g *voplay.GameCtx, hud *WorldHUDState) {
 	w := float64(g.Width)
 	leftW := 214.0
 	if w < 430 {
@@ -332,7 +332,7 @@ func drawCompactWorldHUD(theme WorldTheme, g *voplay.GameCtx, hud WorldHUDState)
 	}
 }
 
-func drawHudPanel(d *voplay.DrawCtx, theme WorldTheme, x, y, width, height float64, alpha float64) {
+func drawHudPanel(d *voplay.DrawCtx, theme *WorldTheme, x, y, width, height float64, alpha float64) {
 	d.DrawRect(x + 4, y + 5, width, height, theme.HudShadowColor.WithAlpha(0.18))
 	d.DrawRect(x, y, width, height, theme.HudPanelColor.WithAlpha(alpha))
 }
