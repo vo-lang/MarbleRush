@@ -200,7 +200,7 @@ func (p *PrimitivePart) SetPoseScale(position voplay.Vec3, rotation voplay.Quat,
 }
 
 func (p *PrimitivePart) SetVisible(visible bool) {
-	if p == nil {
+	if p == nil || p.Layer == nil || p.Object == 0 {
 		return
 	}
 	p.Visible = visible
@@ -208,6 +208,9 @@ func (p *PrimitivePart) SetVisible(visible bool) {
 }
 
 func (p *PrimitivePart) write() {
+	if p == nil || p.Layer == nil || p.Object == 0 {
+		return
+	}
 	scale := p.Scale
 	if !p.Visible {
 		scale = voplay.Vec3{X: 0.001, Y: 0.001, Z: 0.001}
